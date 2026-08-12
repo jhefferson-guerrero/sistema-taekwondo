@@ -11,8 +11,11 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
-  Menu
+  Menu,
+  Sun,
+  Moon
 } from 'lucide-react';
+import { useTheme } from '../contexts/ThemeContext';
 
 const navItems = [
   { name: 'Inicio', path: '/dashboard', icon: Home },
@@ -27,6 +30,7 @@ export default function DashboardLayout({ children }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const { isDark, toggleTheme } = useTheme();
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -34,18 +38,15 @@ export default function DashboardLayout({ children }) {
   };
 
   return (
-    <div className="flex h-[100dvh] w-full bg-[#050505] text-white overflow-hidden font-sans relative">
-      {/* Background ambient glow */}
-      <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-red-600/5 rounded-full blur-[150px] pointer-events-none z-0" />
-
+    <div className="flex h-[100dvh] w-full bg-slate-50 dark:bg-black text-slate-900 dark:text-white overflow-hidden font-sans relative transition-colors duration-500">
       {/* Sidebar */}
       <aside 
-        className={`relative z-20 flex flex-col border-r border-white/10 bg-white/[0.02] backdrop-blur-3xl transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] ${
+        className={`relative z-20 flex flex-col border-r border-slate-200 dark:border-white/10 bg-white/50 dark:bg-white/[0.02] backdrop-blur-3xl transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] ${
           isCollapsed ? 'w-20' : 'w-72'
         }`}
       >
         {/* Header & Toggle */}
-        <div className={`h-24 flex items-center border-b border-white/10 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] ${
+        <div className={`h-24 flex items-center border-b border-slate-200 dark:border-white/10 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] ${
           isCollapsed ? 'justify-center px-0' : 'justify-between px-6'
         }`}>
           {!isCollapsed && (
@@ -57,12 +58,12 @@ export default function DashboardLayout({ children }) {
           
           <button 
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="w-10 h-10 rounded-full flex items-center justify-center bg-white/5 hover:bg-white/10 transition-colors border border-white/10 shrink-0 group"
+            className="w-10 h-10 rounded-full flex items-center justify-center bg-slate-100 hover:bg-slate-200 border-slate-200 dark:bg-white/5 dark:hover:bg-white/10 transition-colors border dark:border-white/10 shrink-0 group"
           >
             {isCollapsed ? (
-              <Menu className="w-5 h-5 text-white/70 group-hover:text-white" />
+              <Menu className="w-5 h-5 text-slate-500 group-hover:text-slate-900 dark:text-white/70 dark:group-hover:text-white transition-colors" />
             ) : (
-              <ChevronLeft className="w-5 h-5 text-white/70 group-hover:text-white" />
+              <ChevronLeft className="w-5 h-5 text-slate-500 group-hover:text-slate-900 dark:text-white/70 dark:group-hover:text-white transition-colors" />
             )}
           </button>
         </div>
@@ -78,8 +79,8 @@ export default function DashboardLayout({ children }) {
                 title={isCollapsed ? item.name : ''}
                 className={`group relative flex items-center h-12 rounded-xl transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] overflow-hidden ${
                   isActive 
-                    ? 'bg-white/10 text-white' 
-                    : 'text-white/50 hover:bg-white/5 hover:text-white'
+                    ? 'bg-slate-100 text-slate-900 dark:bg-white/10 dark:text-white' 
+                    : 'text-slate-500 hover:bg-slate-100/50 hover:text-slate-900 dark:text-white/50 dark:hover:bg-white/5 dark:hover:text-white'
                 } ${isCollapsed ? 'justify-center w-14 mx-auto' : 'px-4 w-full'}`}
               >
                 {isActive && !isCollapsed && (
@@ -100,12 +101,34 @@ export default function DashboardLayout({ children }) {
           })}
         </nav>
 
-        {/* Footer / Logout */}
-        <div className="p-3 border-t border-white/10">
+        {/* Footer / Theme & Logout */}
+        <div className="p-3 border-t border-slate-200 dark:border-white/10 flex flex-col gap-2">
+          
+          <button
+            onClick={toggleTheme}
+            title={isCollapsed ? (isDark ? 'Modo Claro' : 'Modo Oscuro') : ''}
+            className={`group relative flex items-center h-12 rounded-xl transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] text-slate-500 hover:bg-slate-100/50 hover:text-slate-900 dark:text-white/50 dark:hover:bg-white/5 dark:hover:text-white overflow-hidden ${
+              isCollapsed ? 'justify-center w-14 mx-auto' : 'px-4 w-full'
+            }`}
+          >
+            <div className="w-5 h-5 shrink-0 flex items-center justify-center relative">
+              {isDark ? (
+                <Sun className="w-5 h-5 transition-transform duration-500 group-hover:rotate-90 group-hover:scale-110" />
+              ) : (
+                <Moon className="w-5 h-5 transition-transform duration-500 group-hover:-rotate-12 group-hover:scale-110" />
+              )}
+            </div>
+            {!isCollapsed && (
+              <span className="ml-4 font-medium whitespace-nowrap text-sm tracking-wide">
+                {isDark ? 'Modo Claro' : 'Modo Oscuro'}
+              </span>
+            )}
+          </button>
+
           <button
             onClick={handleLogout}
             title={isCollapsed ? 'Cerrar Sesión' : ''}
-            className={`group relative flex items-center h-12 rounded-xl transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] text-white/50 hover:bg-red-500/10 hover:text-red-500 overflow-hidden ${
+            className={`group relative flex items-center h-12 rounded-xl transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] text-slate-500 hover:bg-slate-100/50 hover:text-red-600 dark:text-white/50 dark:hover:bg-white/5 dark:hover:text-red-500 overflow-hidden ${
               isCollapsed ? 'justify-center w-14 mx-auto' : 'px-4 w-full'
             }`}
           >
@@ -120,9 +143,9 @@ export default function DashboardLayout({ children }) {
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 relative z-10 flex flex-col h-full overflow-hidden">
-        <div className="flex-1 overflow-y-auto p-8 lg:p-12">
-          <div className="max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-8 duration-1000 ease-[cubic-bezier(0.32,0.72,0,1)] fill-mode-both">
+      <main className="flex-1 flex flex-col h-full overflow-hidden">
+        <div className="flex-1 overflow-y-auto p-8 lg:p-12" id="main-scroll-container">
+          <div className="max-w-7xl mx-auto">
             {children}
           </div>
         </div>

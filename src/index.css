@@ -1,4 +1,29 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-slate-50: #F5F2ED;
+  --color-slate-100: #EAE6DB;
+  --color-slate-200: #DCD6C7;
+  --color-slate-300: #C2BBA8;
+  --color-slate-400: #A8A196;
+  --color-slate-500: #7A7468;
+  --color-slate-600: #5C5549;
+  --color-slate-700: #3D382F;
+  --color-slate-800: #1C1C1C;
+  --color-slate-900: #0B0B0B;
+  
+  --color-white: #F5F2ED;
+  --color-black: #0B0B0B;
+  
+  --color-red-400: #A31E2D;
+  --color-red-500: #8B0D1A;
+  --color-red-600: #8B0D1A;
+  --color-red-700: #7A0A15;
+  --color-red-800: #650710;
+}
+
+
 
 /* Ocultar barra horizontal y estilizar vertical */
 .custom-scrollbar::-webkit-scrollbar {
