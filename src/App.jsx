@@ -5,6 +5,7 @@ import Alumnos from './pages/Alumnos';
 import Pagos from './pages/Pagos';
 import Asistencia from './pages/Asistencia';
 import ProtectedRoute from './components/ProtectedRoute';
+import Horarios from './pages/Horarios';
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
               <Route path="alumnos" element={<Alumnos />} />
               <Route path="pagos" element={<Pagos />} />
               <Route path="asistencia" element={<Asistencia />} />
+              <Route path="horarios" element={<Horarios />} />
               <Route path="*" element={<Dashboard />} /> {/* Fallback temporary */}
             </Routes>
           </ProtectedRoute>
