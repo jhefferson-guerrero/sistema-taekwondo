@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import DashboardLayout from '../components/DashboardLayout';
 import { supabase } from '../services/supabaseClient';
 import { Loader2, Calendar, Search, Filter, CheckCircle, Check, Users, AlertCircle, X } from 'lucide-react';
+import { calcularClasesRestantes } from '../utils/membresiaUtils';
 
 export default function Asistencia() {
   const [alumnos, setAlumnos] = useState([]);
@@ -27,7 +28,8 @@ export default function Asistencia() {
         .from('alumnos')
         .select(`
           *,
-          pagos ( clases_compradas ),
+          pagos ( fecha_inicio, fecha_vencimiento ),
+          horarios ( dias ),
           asistencias ( id, fecha_asistencia )
         `)
         .order('nombre', { ascending: true });
@@ -42,9 +44,16 @@ export default function Asistencia() {
       const attendedTodaySet = new Set();
 
       const alumnosProcessed = alumnosData.map(a => {
-        const totalPagadas = a.pagos ? a.pagos.reduce((sum, p) => sum + (p.clases_compradas || 0), 0) : 0;
-        const totalAsistencias = a.asistencias ? a.asistencias.length : 0;
-        const clasesRestantes = totalPagadas - totalAsistencias;
+        let clasesRestantes = 0;
+        if (a.pagos && a.pagos.length > 0) {
+          // Find the latest payment based on fecha_vencimiento
+          const latestPago = [...a.pagos].sort((x, y) => new Date(y.fecha_vencimiento) - new Date(x.fecha_vencimiento))[0];
+          clasesRestantes = calcularClasesRestantes(
+            latestPago.fecha_inicio,
+            latestPago.fecha_vencimiento,
+            a.horarios?.dias || []
+          );
+        }
 
         let ultima_asistencia = null;
         if (a.asistencias && a.asistencias.length > 0) {
@@ -92,8 +101,7 @@ export default function Asistencia() {
       setAlumnos(prevAlumnos => prevAlumnos.map(a => 
         a.id === alumnoId ? { 
           ...a, 
-          ultima_asistencia: new Date().toISOString(),
-          clases_restantes: a.clases_restantes - 1
+          ultima_asistencia: new Date().toISOString()
         } : a
       ));
       
@@ -130,8 +138,7 @@ export default function Asistencia() {
       });
       setAlumnos(prevAlumnos => prevAlumnos.map(a => 
         a.id === undoAlumno.id ? { 
-          ...a, 
-          clases_restantes: a.clases_restantes + 1 
+          ...a
         } : a
       ));
       setUndoAlumno(null);
@@ -276,18 +283,18 @@ export default function Asistencia() {
                             <span className="text-sm text-slate-400 dark:text-white/30 italic">Sin registros</span>
                           )}
                         </td>
-                        <td className="px-8 py-5 text-right">
+                        <td className="px-8 py-5 text-right w-[140px]">
                           <button 
                             onClick={() => hasAttended ? setUndoAlumno(alumno) : handleMarcarAsistencia(alumno.id)}
                             disabled={isMarking}
-                            className={`group/btn relative inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-500 overflow-hidden ${
+                            className={`group/btn relative inline-flex items-center justify-center gap-2 w-[112px] h-[40px] rounded-xl text-sm font-semibold transition-all duration-500 overflow-hidden ${
                               hasAttended 
                                 ? 'bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.3)] hover:bg-emerald-600 disabled:opacity-50' 
                                 : 'bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-white hover:border-red-600 hover:text-red-700 dark:hover:border-red-600 dark:hover:text-red-500 shadow-sm active:scale-[0.98]'
                             }`}
                           >
                             {isMarking ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
+                              <Loader2 className="w-5 h-5 animate-spin" />
                             ) : hasAttended ? (
                               <>
                                 <Check className="w-4 h-4" strokeWidth={3} />

@@ -4,6 +4,19 @@ import DashboardLayout from '../components/DashboardLayout';
 import { supabase } from '../services/supabaseClient';
 import { Plus, Minus, CreditCard, X, Loader2, Calendar, Edit2, Trash2, AlertCircle, Search, Filter } from 'lucide-react';
 
+const getTodayStr = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
+const getNextMonthStr = (dateStr) => {
+  if (!dateStr) return '';
+  const d = new Date(`${dateStr}T00:00:00`);
+  d.setMonth(d.getMonth() + 1);
+  d.setDate(d.getDate() - 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
 export default function Pagos() {
   const [pagos, setPagos] = useState([]);
   const [alumnos, setAlumnos] = useState([]);
@@ -19,7 +32,8 @@ export default function Pagos() {
   const [formData, setFormData] = useState({
     alumno_id: '',
     monto: '',
-    clases_compradas: 12,
+    fecha_inicio: getTodayStr(),
+    fecha_vencimiento: getNextMonthStr(getTodayStr()),
     metodo_pago: 'Efectivo'
   });
   const [saving, setSaving] = useState(false);
@@ -63,19 +77,22 @@ export default function Pagos() {
   };
 
   const handleInputChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    if (name === 'fecha_inicio') {
+      setFormData({
+        ...formData,
+        fecha_inicio: value,
+        fecha_vencimiento: getNextMonthStr(value)
+      });
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
   };
 
   const adjustMonto = (delta) => {
     const current = parseFloat(formData.monto) || 0;
     const next = Math.max(0, current + delta);
     setFormData(prev => ({ ...prev, monto: next.toFixed(2) }));
-  };
-
-  const adjustClases = (delta) => {
-    const current = parseInt(formData.clases_compradas, 10) || 0;
-    const next = Math.max(1, current + delta);
-    setFormData(prev => ({ ...prev, clases_compradas: next }));
   };
 
   const handleSubmit = async (e) => {
@@ -86,7 +103,8 @@ export default function Pagos() {
       const payload = {
         alumno_id: formData.alumno_id,
         monto: parseFloat(formData.monto),
-        clases_compradas: parseInt(formData.clases_compradas, 10),
+        fecha_inicio: formData.fecha_inicio,
+        fecha_vencimiento: formData.fecha_vencimiento,
         metodo_pago: formData.metodo_pago
       };
 
@@ -104,7 +122,13 @@ export default function Pagos() {
       }
 
       setIsModalOpen(false);
-      setFormData({ alumno_id: '', monto: '', clases_compradas: 12, metodo_pago: 'Efectivo' });
+      setFormData({ 
+        alumno_id: '', 
+        monto: '', 
+        fecha_inicio: getTodayStr(), 
+        fecha_vencimiento: getNextMonthStr(getTodayStr()), 
+        metodo_pago: 'Efectivo' 
+      });
       setEditId(null);
       await fetchData();
     } catch (error) {
@@ -120,7 +144,8 @@ export default function Pagos() {
     setFormData({ 
       alumno_id: '', 
       monto: '', 
-      clases_compradas: 12, 
+      fecha_inicio: getTodayStr(), 
+      fecha_vencimiento: getNextMonthStr(getTodayStr()), 
       metodo_pago: 'Efectivo'
     });
     setAlumnoSearchTerm('');
@@ -132,7 +157,8 @@ export default function Pagos() {
     setFormData({
       alumno_id: pago.alumno_id,
       monto: pago.monto,
-      clases_compradas: pago.clases_compradas,
+      fecha_inicio: pago.fecha_inicio || getTodayStr(),
+      fecha_vencimiento: pago.fecha_vencimiento || getNextMonthStr(getTodayStr()),
       metodo_pago: pago.metodo_pago
     });
     const pagoAlumno = alumnos.find(a => a.id === pago.alumno_id);
@@ -263,10 +289,10 @@ export default function Pagos() {
                   <tr className="border-b border-slate-200 dark:border-white/10 transition-colors duration-500">
                     <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-white/40">Alumno</th>
                     <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-white/40">Monto</th>
-                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-white/40">Clases</th>
+                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-white/40">Vigencia</th>
                     <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-white/40">Método</th>
                     <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-white/40">Fecha</th>
-                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-white/40">Estado</th>
+                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-white/40 text-right">Estado</th>
                     <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-white/40 text-right">Acciones</th>
                   </tr>
                 </thead>
@@ -282,8 +308,12 @@ export default function Pagos() {
                         </div>
                       </td>
                       <td className="px-8 py-5">
-                        <div className="font-medium text-slate-700 dark:text-white/90 transition-colors duration-300">
-                          {pago.clases_compradas}
+                        <div className="flex flex-col text-xs text-slate-500 dark:text-white/60">
+                          <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-white/5 px-2 py-1 rounded-md border border-slate-200 dark:border-white/10 w-max">
+                            <span>{pago.fecha_inicio ? new Date(pago.fecha_inicio + 'T00:00:00').toLocaleDateString() : '-'}</span>
+                            <span className="opacity-50 text-[10px]">→</span>
+                            <span className="font-bold text-slate-700 dark:text-white/90">{pago.fecha_vencimiento ? new Date(pago.fecha_vencimiento + 'T00:00:00').toLocaleDateString() : '-'}</span>
+                          </div>
                         </div>
                       </td>
                       <td className="px-8 py-5">
@@ -297,7 +327,7 @@ export default function Pagos() {
                           {new Date(pago.fecha_pago).toLocaleDateString()}
                         </div>
                       </td>
-                      <td className="px-8 py-5">
+                      <td className="px-8 py-5 text-right">
                         <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold transition-all duration-300 ease-in-out ${
                           pago.estado === 'Completado' 
                             ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/10 dark:text-red-500 dark:border-red-600/20' 
@@ -401,7 +431,7 @@ export default function Pagos() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="flex flex-col gap-2">
                     <label className="text-xs uppercase tracking-widest text-slate-500 dark:text-white/40 font-medium ml-1 transition-colors duration-500">Monto (S/)</label>
                     <div className="relative">
@@ -430,26 +460,32 @@ export default function Pagos() {
                   </div>
                   
                   <div className="flex flex-col gap-2">
-                    <label className="text-xs uppercase tracking-widest text-slate-500 dark:text-white/40 font-medium ml-1 transition-colors duration-500">Clases Compradas</label>
+                    <label className="text-xs uppercase tracking-widest text-slate-500 dark:text-white/40 font-medium ml-1 transition-colors duration-500">Fecha de Inicio</label>
                     <div className="relative">
                       <input
-                        type="number"
-                        min="1"
-                        name="clases_compradas"
-                        value={formData.clases_compradas}
+                        type="date"
+                        name="fecha_inicio"
+                        value={formData.fecha_inicio}
                         onChange={handleInputChange}
                         disabled={saving}
                         required
-                        className="w-full bg-slate-50 border border-slate-200 text-slate-900 dark:bg-black dark:border-white/10 dark:text-white rounded-xl pl-4 pr-22 py-3 focus:outline-none focus:border-red-600 dark:focus:bg-white/10 transition-all duration-300 ease-in-out disabled:opacity-50 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:_textfield]"
+                        className="w-full bg-slate-50 border border-slate-200 text-slate-900 dark:bg-black dark:border-white/10 dark:text-white rounded-xl px-4 py-3 focus:outline-none focus:border-red-600 dark:focus:bg-white/10 transition-all duration-300 ease-in-out disabled:opacity-50"
                       />
-                      <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                        <button type="button" onClick={() => adjustClases(-1)} disabled={saving} className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-200/50 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-600 dark:text-white/70 transition-colors disabled:opacity-50">
-                          <Minus className="w-3.5 h-3.5" />
-                        </button>
-                        <button type="button" onClick={() => adjustClases(1)} disabled={saving} className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-200/50 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-600 dark:text-white/70 transition-colors disabled:opacity-50">
-                          <Plus className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex flex-col gap-2">
+                    <label className="text-xs uppercase tracking-widest text-slate-500 dark:text-white/40 font-medium ml-1 transition-colors duration-500">Fecha de Vencimiento</label>
+                    <div className="relative">
+                      <input
+                        type="date"
+                        name="fecha_vencimiento"
+                        value={formData.fecha_vencimiento}
+                        onChange={handleInputChange}
+                        disabled={saving}
+                        required
+                        className="w-full bg-slate-50 border border-slate-200 text-slate-900 dark:bg-black dark:border-white/10 dark:text-white rounded-xl px-4 py-3 focus:outline-none focus:border-red-600 dark:focus:bg-white/10 transition-all duration-300 ease-in-out disabled:opacity-50"
+                      />
                     </div>
                   </div>
                 </div>
