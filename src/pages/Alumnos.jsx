@@ -308,7 +308,7 @@ export default function Alumnos() {
             />
           </div>
           
-          <div className="relative w-full sm:w-48 group/filter">
+          <div className="relative w-full sm:w-56 group/filter">
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
               <Filter className="w-4 h-4 text-slate-400 group-focus-within/filter:text-red-600 dark:text-white/40 dark:group-focus-within/filter:text-red-500 transition-all duration-300 ease-in-out" />
             </div>
