@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../services/supabaseClient';
-import { 
-  Home, 
-  Users, 
-  CreditCard, 
-  Award, 
-  CalendarCheck, 
-  Clock, 
+import {
+  Home,
+  Users,
+  CreditCard,
+  Award,
+  CalendarCheck,
+  Clock,
   LogOut,
   ChevronLeft,
   ChevronRight,
@@ -38,25 +38,23 @@ export default function DashboardLayout({ children }) {
   };
 
   return (
-    <div className="flex h-[100dvh] w-full bg-slate-50 dark:bg-black text-slate-900 dark:text-white overflow-hidden font-sans relative transition-colors duration-500">
+    <div className="flex h-[100dvh] w-full bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white overflow-hidden font-sans relative transition-colors duration-500">
       {/* Sidebar */}
-      <aside 
-        className={`relative z-20 flex flex-col border-r border-slate-200 dark:border-white/10 bg-white/50 dark:bg-white/[0.02] backdrop-blur-3xl transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] ${
-          isCollapsed ? 'w-20' : 'w-72'
-        }`}
+      <aside
+        className={`relative z-20 flex flex-col border-r border-slate-200 dark:border-white/10 bg-white/50 dark:bg-white/[0.02] backdrop-blur-3xl transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] ${isCollapsed ? 'w-20' : 'w-72'
+          }`}
       >
         {/* Header & Toggle */}
-        <div className={`h-24 flex items-center border-b border-slate-200 dark:border-white/10 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] ${
-          isCollapsed ? 'justify-center px-0' : 'justify-between px-6'
-        }`}>
+        <div className={`h-24 flex items-center border-b border-slate-200 dark:border-white/10 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] ${isCollapsed ? 'justify-center px-0' : 'justify-between px-6'
+          }`}>
           {!isCollapsed && (
             <div className="flex items-center gap-3 animate-in fade-in zoom-in-95 duration-500">
               <div className="w-8 h-8 rounded-full bg-red-600 flex items-center justify-center shrink-0" />
               <span className="font-bold tracking-tight truncate">Fertex Admin</span>
             </div>
           )}
-          
-          <button 
+
+          <button
             onClick={() => setIsCollapsed(!isCollapsed)}
             className="w-10 h-10 rounded-full flex items-center justify-center bg-slate-100 hover:bg-slate-200 border-slate-200 dark:bg-white/5 dark:hover:bg-white/10 transition-colors border dark:border-white/10 shrink-0 group"
           >
@@ -77,20 +75,18 @@ export default function DashboardLayout({ children }) {
                 key={item.name}
                 onClick={() => navigate(item.path)}
                 title={isCollapsed ? item.name : ''}
-                className={`group relative flex items-center h-12 rounded-xl transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] overflow-hidden ${
-                  isActive 
-                    ? 'bg-slate-100 text-slate-900 dark:bg-white/10 dark:text-white' 
-                    : 'text-slate-500 hover:bg-slate-100/50 hover:text-slate-900 dark:text-white/50 dark:hover:bg-white/5 dark:hover:text-white'
-                } ${isCollapsed ? 'justify-center w-14 mx-auto' : 'px-4 w-full'}`}
+                className={`group relative flex items-center h-12 rounded-xl transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] overflow-hidden ${isActive
+                  ? 'bg-slate-100 text-slate-900 dark:bg-white/10 dark:text-white'
+                  : 'text-slate-500 hover:bg-slate-100/50 hover:text-slate-900 dark:text-white/50 dark:hover:bg-white/5 dark:hover:text-white'
+                  } ${isCollapsed ? 'justify-center w-14 mx-auto' : 'px-4 w-full'}`}
               >
                 {isActive && !isCollapsed && (
                   <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-red-600 rounded-r-full" />
                 )}
-                
-                <item.icon className={`w-5 h-5 shrink-0 transition-transform duration-500 ${
-                  isActive ? 'text-red-500' : 'group-hover:scale-110'
-                }`} />
-                
+
+                <item.icon className={`w-5 h-5 shrink-0 transition-transform duration-500 ${isActive ? 'text-red-500' : 'group-hover:scale-110'
+                  }`} />
+
                 {!isCollapsed && (
                   <span className="ml-4 font-medium whitespace-nowrap text-sm tracking-wide">
                     {item.name}
@@ -103,13 +99,12 @@ export default function DashboardLayout({ children }) {
 
         {/* Footer / Theme & Logout */}
         <div className="p-3 border-t border-slate-200 dark:border-white/10 flex flex-col gap-2">
-          
+
           <button
             onClick={toggleTheme}
             title={isCollapsed ? (isDark ? 'Modo Claro' : 'Modo Oscuro') : ''}
-            className={`group relative flex items-center h-12 rounded-xl transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] text-slate-500 hover:bg-slate-100/50 hover:text-slate-900 dark:text-white/50 dark:hover:bg-white/5 dark:hover:text-white overflow-hidden ${
-              isCollapsed ? 'justify-center w-14 mx-auto' : 'px-4 w-full'
-            }`}
+            className={`group relative flex items-center h-12 rounded-xl transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] text-slate-500 hover:bg-slate-100/50 hover:text-slate-900 dark:text-white/50 dark:hover:bg-white/5 dark:hover:text-white overflow-hidden ${isCollapsed ? 'justify-center w-14 mx-auto' : 'px-4 w-full'
+              }`}
           >
             <div className="w-5 h-5 shrink-0 flex items-center justify-center relative">
               {isDark ? (
@@ -128,9 +123,8 @@ export default function DashboardLayout({ children }) {
           <button
             onClick={handleLogout}
             title={isCollapsed ? 'Cerrar Sesión' : ''}
-            className={`group relative flex items-center h-12 rounded-xl transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] text-slate-500 hover:bg-slate-100/50 hover:text-red-600 dark:text-white/50 dark:hover:bg-white/5 dark:hover:text-red-500 overflow-hidden ${
-              isCollapsed ? 'justify-center w-14 mx-auto' : 'px-4 w-full'
-            }`}
+            className={`group relative flex items-center h-12 rounded-xl transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] text-slate-500 hover:bg-slate-100/50 hover:text-red-600 dark:text-white/50 dark:hover:bg-white/5 dark:hover:text-red-500 overflow-hidden ${isCollapsed ? 'justify-center w-14 mx-auto' : 'px-4 w-full'
+              }`}
           >
             <LogOut className="w-5 h-5 shrink-0 group-hover:-translate-x-1 transition-transform duration-500" />
             {!isCollapsed && (

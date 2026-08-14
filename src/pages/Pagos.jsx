@@ -27,7 +27,7 @@ export default function Pagos() {
   const [deleting, setDeleting] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [metodoFilter, setMetodoFilter] = useState('Todos');
-  
+
   // Form State
   const [formData, setFormData] = useState({
     alumno_id: '',
@@ -65,7 +65,7 @@ export default function Pagos() {
         .from('alumnos')
         .select('id, nombre, apellidos')
         .order('nombre', { ascending: true });
-        
+
       if (alumnosError) throw alumnosError;
       setAlumnos(alumnosData || []);
 
@@ -99,7 +99,7 @@ export default function Pagos() {
     e.preventDefault();
     try {
       setSaving(true);
-      
+
       const payload = {
         alumno_id: formData.alumno_id,
         monto: parseFloat(formData.monto),
@@ -122,12 +122,12 @@ export default function Pagos() {
       }
 
       setIsModalOpen(false);
-      setFormData({ 
-        alumno_id: '', 
-        monto: '', 
-        fecha_inicio: getTodayStr(), 
-        fecha_vencimiento: getNextMonthStr(getTodayStr()), 
-        metodo_pago: 'Efectivo' 
+      setFormData({
+        alumno_id: '',
+        monto: '',
+        fecha_inicio: getTodayStr(),
+        fecha_vencimiento: getNextMonthStr(getTodayStr()),
+        metodo_pago: 'Efectivo'
       });
       setEditId(null);
       await fetchData();
@@ -141,11 +141,11 @@ export default function Pagos() {
 
   const openNewModal = () => {
     setEditId(null);
-    setFormData({ 
-      alumno_id: '', 
-      monto: '', 
-      fecha_inicio: getTodayStr(), 
-      fecha_vencimiento: getNextMonthStr(getTodayStr()), 
+    setFormData({
+      alumno_id: '',
+      monto: '',
+      fecha_inicio: getTodayStr(),
+      fecha_vencimiento: getNextMonthStr(getTodayStr()),
       metodo_pago: 'Efectivo'
     });
     setAlumnoSearchTerm('');
@@ -174,11 +174,11 @@ export default function Pagos() {
         .from('pagos')
         .delete()
         .eq('id', deleteId);
-      
+
       if (error) throw error;
       setDeleteId(null);
       await fetchData();
-    } catch(error) {
+    } catch (error) {
       console.error('Error deleting pago:', error);
       alert('Error al eliminar el pago.');
     } finally {
@@ -192,7 +192,7 @@ export default function Pagos() {
     const alumnoNombreCompleto = `${pago.alumnos?.nombre || ''} ${pago.alumnos?.apellidos || ''}`.toLowerCase();
     const matchesSearch = alumnoNombreCompleto.includes(searchTerm.toLowerCase());
     const matchesMetodo = metodoFilter === 'Todos' || pago.metodo_pago === metodoFilter;
-    
+
     return matchesSearch && matchesMetodo;
   });
 
@@ -204,7 +204,7 @@ export default function Pagos() {
   return (
     <DashboardLayout>
       <div className="flex flex-col gap-8">
-        
+
         {/* Header Section */}
         <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex flex-col gap-2">
@@ -217,13 +217,13 @@ export default function Pagos() {
               Registro de <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-red-800 dark:from-red-500 dark:to-red-700">Pagos</span>
             </h1>
           </div>
-          
-          <button 
+
+          <button
             onClick={openNewModal}
             className="group relative flex items-center justify-between bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-black px-6 py-3 rounded-full font-medium dark:hover:bg-gray-100 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98] shrink-0"
           >
             <span className="relative z-10 pr-4">Nuevo Pago</span>
-            <div className="relative z-10 w-8 h-8 rounded-full bg-white/20 group-hover:bg-white/30 dark:bg-black/10 flex items-center justify-center dark:group-hover:bg-black/20 transition-colors duration-500 shrink-0">
+            <div className="relative z-10 w-8 h-8 rounded-full bg-white/20 group-hover:bg-white/30 dark:bg-slate-800/10 flex items-center justify-center dark:group-hover:bg-black/20 transition-colors duration-500 shrink-0">
               <Plus className="w-4 h-4 group-hover:scale-110 transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]" strokeWidth={2.5} />
             </div>
           </button>
@@ -240,10 +240,10 @@ export default function Pagos() {
               placeholder="Buscar por nombre de alumno..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-white dark:bg-black border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl py-3 pl-11 pr-4 focus:outline-none focus:border-red-600 dark:focus:border-red-500 transition-all duration-300 ease-in-out shadow-sm"
+              className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl py-3 pl-11 pr-4 focus:outline-none focus:border-red-600 dark:focus:border-red-500 transition-all duration-300 ease-in-out shadow-sm"
             />
           </div>
-          
+
           <div className="relative w-full sm:w-56 group/filter">
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
               <Filter className="w-4 h-4 text-slate-400 group-focus-within/filter:text-red-600 dark:text-white/40 dark:group-focus-within/filter:text-red-500 transition-all duration-300 ease-in-out" />
@@ -251,7 +251,7 @@ export default function Pagos() {
             <select
               value={metodoFilter}
               onChange={(e) => setMetodoFilter(e.target.value)}
-              className="w-full bg-white dark:bg-black border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl py-3 pl-11 pr-4 focus:outline-none focus:border-red-600 dark:focus:border-red-500 transition-all duration-300 ease-in-out shadow-sm appearance-none"
+              className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl py-3 pl-11 pr-4 focus:outline-none focus:border-red-600 dark:focus:border-red-500 transition-all duration-300 ease-in-out shadow-sm appearance-none"
             >
               <option value="Todos">Todos los métodos</option>
               {metodosPago.map(m => (
@@ -262,9 +262,9 @@ export default function Pagos() {
         </div>
 
         {/* Table Container */}
-        <div className="p-1.5 bg-slate-50/80 dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 rounded-[2rem] shadow-xl dark:shadow-2xl backdrop-blur-xl transition-colors duration-700 w-full overflow-hidden">
-          <div className="bg-white dark:bg-black rounded-[calc(2rem-0.375rem)] shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] flex flex-col w-full overflow-x-auto custom-scrollbar relative min-h-[400px] transition-colors duration-500">
-            
+        <div className="p-1.5 bg-slate-50/80 dark:bg-white/[0.02] border border-slate-300 dark:border-white/20 border-t-[4px] border-t-red-600 dark:border-t-red-600 rounded-[2rem] shadow-[0_12px_40px_-12px_rgba(0,0,0,0.15)] dark:shadow-[0_12px_40px_-12px_rgba(255,255,255,0.05)] backdrop-blur-xl transition-all duration-700 w-full overflow-hidden">
+          <div className="bg-white dark:bg-slate-800 rounded-[calc(2rem-0.375rem)] shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] flex flex-col w-full overflow-x-auto custom-scrollbar relative min-h-[400px] transition-colors duration-500">
+
             {loading ? (
               <div className="absolute inset-0 flex items-center justify-center">
                 <Loader2 className="w-8 h-8 text-red-600 animate-spin" />
@@ -278,7 +278,7 @@ export default function Pagos() {
                   {pagos.length === 0 ? 'Sin pagos registrados' : 'Sin resultados de búsqueda'}
                 </h3>
                 <p className="text-slate-500 dark:text-white/60 mt-2 max-w-sm text-sm transition-colors duration-500">
-                  {pagos.length === 0 
+                  {pagos.length === 0
                     ? 'Aún no hay pagos en la base de datos. Haz clic en "Nuevo Pago" para empezar a registrarlos.'
                     : 'No se encontraron pagos que coincidan con los filtros aplicados.'}
                 </p>
@@ -288,12 +288,12 @@ export default function Pagos() {
                 <thead>
                   <tr className="border-b border-slate-200 dark:border-white/10 transition-colors duration-500">
                     <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-white/40">Alumno</th>
-                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-white/40">Monto</th>
-                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-white/40">Vigencia</th>
-                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-white/40">Método</th>
-                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-white/40">Fecha</th>
-                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-white/40 text-right">Estado</th>
-                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-white/40 text-right">Acciones</th>
+                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-white/40 text-center">Monto</th>
+                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-white/40 text-center">Vigencia</th>
+                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-white/40 text-center">Método</th>
+                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-white/40 text-center">Fecha</th>
+                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-white/40 text-center">Estado</th>
+                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-white/40 text-center">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 dark:divide-white/5 transition-all duration-300 ease-in-out">
@@ -302,52 +302,51 @@ export default function Pagos() {
                       <td className="px-8 py-5">
                         <div className="font-semibold text-slate-900 dark:text-white transition-colors duration-300">{pago.alumnos?.nombre} {pago.alumnos?.apellidos}</div>
                       </td>
-                      <td className="px-8 py-5">
+                      <td className="px-8 py-5 text-center">
                         <div className="font-medium text-slate-700 dark:text-white/90 transition-colors duration-300 text-emerald-600 dark:text-red-500">
                           S/ {Number(pago.monto).toFixed(2)}
                         </div>
                       </td>
-                      <td className="px-8 py-5">
-                        <div className="flex flex-col text-xs text-slate-500 dark:text-white/60">
-                          <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-white/5 px-2 py-1 rounded-md border border-slate-200 dark:border-white/10 w-max">
+                      <td className="px-8 py-5 text-center">
+                        <div className="flex flex-col items-center text-xs text-slate-500 dark:text-white/60">
+                          <div className="flex items-center justify-center gap-1.5 bg-slate-100 dark:bg-white/5 px-2 py-1 rounded-md border border-slate-200 dark:border-white/10 w-max">
                             <span>{pago.fecha_inicio ? new Date(pago.fecha_inicio + 'T00:00:00').toLocaleDateString() : '-'}</span>
                             <span className="opacity-50 text-[10px]">→</span>
                             <span className="font-bold text-slate-700 dark:text-white/90">{pago.fecha_vencimiento ? new Date(pago.fecha_vencimiento + 'T00:00:00').toLocaleDateString() : '-'}</span>
                           </div>
                         </div>
                       </td>
-                      <td className="px-8 py-5">
+                      <td className="px-8 py-5 text-center">
                         <span className="inline-flex items-center px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-xs font-bold text-slate-800 group-hover:border-slate-300 dark:bg-white/10 dark:border-white/10 dark:text-white dark:group-hover:border-white/20 transition-all duration-300 ease-in-out">
                           {pago.metodo_pago}
                         </span>
                       </td>
-                      <td className="px-8 py-5">
-                        <div className="inline-flex items-center gap-2 text-slate-500 dark:text-white/50 text-sm">
+                      <td className="px-8 py-5 text-center">
+                        <div className="inline-flex items-center justify-center gap-2 text-slate-500 dark:text-white/50 text-sm">
                           <Calendar className="w-4 h-4 opacity-50" />
                           {new Date(pago.fecha_pago).toLocaleDateString()}
                         </div>
                       </td>
-                      <td className="px-8 py-5 text-right">
-                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold transition-all duration-300 ease-in-out ${
-                          pago.estado === 'Completado' 
-                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/10 dark:text-red-500 dark:border-red-600/20' 
-                            : 'bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20'
-                        }`}>
+                      <td className="px-8 py-5 text-center">
+                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold transition-all duration-300 ease-in-out ${pago.estado === 'Completado'
+                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20'
+                          : 'bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20'
+                          }`}>
                           {pago.estado || 'Completado'}
                         </span>
                       </td>
-                      <td className="px-8 py-5 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <button 
+                      <td className="px-8 py-5 text-center">
+                        <div className="flex items-center justify-center gap-2">
+                          <button
                             onClick={() => openEditModal(pago)}
                             className="p-2 text-slate-500 hover:text-slate-900 dark:text-white/60 dark:hover:text-white transition-all duration-300 ease-in-out rounded-lg hover:bg-slate-200 dark:hover:bg-white/10"
                             title="Editar"
                           >
                             <Edit2 className="w-[18px] h-[18px] transition-transform duration-300 hover:scale-110" />
                           </button>
-                          <button 
+                          <button
                             onClick={() => setDeleteId(pago.id)}
-                            className="p-2 text-slate-500 hover:text-red-600 dark:text-white/60 dark:hover:text-red-500 transition-all duration-300 ease-in-out rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10"
+                            className="p-2 text-slate-500 hover:text-red-600 dark:text-white/60 dark:hover:text-red-500 transition-all duration-300 ease-in-out rounded-lg hover:bg-slate-200 dark:hover:bg-white/10"
                             title="Eliminar"
                           >
                             <Trash2 className="w-[18px] h-[18px] transition-transform duration-300 hover:scale-110" />
@@ -367,16 +366,16 @@ export default function Pagos() {
       {/* Modal - Nuevo/Editar Pago */}
       {isModalOpen && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-md transition-all duration-300 ease-in-out" onClick={() => !saving && setIsModalOpen(false)} />
-          
+          <div className="absolute inset-0 bg-slate-900/40 dark:bg-slate-800/60 backdrop-blur-md transition-all duration-300 ease-in-out" onClick={() => !saving && setIsModalOpen(false)} />
+
           <div className="relative w-full max-w-2xl p-1.5 bg-slate-50/80 dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 rounded-[2rem] shadow-xl dark:shadow-2xl animate-in fade-in zoom-in-95 duration-300 ease-in-out">
-            <div className="p-8 bg-white dark:bg-black rounded-[calc(2rem-0.375rem)] shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] flex flex-col gap-6 transition-all duration-300 ease-in-out">
-              
+            <div className="p-8 bg-white dark:bg-slate-800 rounded-[calc(2rem-0.375rem)] shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] flex flex-col gap-6 transition-all duration-300 ease-in-out">
+
               <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white transition-all duration-300 ease-in-out">
                   {editId ? 'Editar Pago' : 'Nuevo Pago'}
                 </h2>
-                <button 
+                <button
                   onClick={() => setIsModalOpen(false)}
                   disabled={saving}
                   className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-900 dark:bg-white/5 dark:text-white/70 flex items-center justify-center dark:hover:bg-white/10 dark:hover:text-white transition-all duration-300 ease-in-out disabled:opacity-50"
@@ -404,10 +403,10 @@ export default function Pagos() {
                       }}
                       disabled={saving}
                       required={!formData.alumno_id}
-                      className="w-full bg-slate-50 border border-slate-200 text-slate-900 dark:bg-black dark:border-white/10 dark:text-white rounded-xl px-4 py-3 focus:outline-none focus:border-red-600 transition-all duration-300 ease-in-out disabled:opacity-50"
+                      className="w-full bg-slate-50 border border-slate-200 text-slate-900 dark:bg-slate-800 dark:border-white/10 dark:text-white rounded-xl px-4 py-3 focus:outline-none focus:border-red-600 transition-all duration-300 ease-in-out disabled:opacity-50"
                     />
                     {isAlumnoDropdownOpen && (
-                      <div className="absolute z-10 w-full mt-1 bg-white dark:bg-black border border-slate-200 dark:border-white/10 rounded-xl shadow-lg max-h-48 overflow-y-auto custom-scrollbar">
+                      <div className="absolute z-10 w-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl shadow-lg max-h-48 overflow-y-auto custom-scrollbar">
                         {filteredAlumnosDropdown.length === 0 ? (
                           <div className="px-4 py-3 text-sm text-slate-500 dark:text-white/50">No se encontraron alumnos</div>
                         ) : (
@@ -446,7 +445,7 @@ export default function Pagos() {
                         disabled={saving}
                         required
                         placeholder="0.00"
-                        className="w-full bg-slate-50 border border-slate-200 text-slate-900 dark:bg-black dark:border-white/10 dark:text-white rounded-xl pl-10 pr-22 py-3 focus:outline-none focus:border-red-600 dark:focus:bg-white/10 transition-all duration-300 ease-in-out disabled:opacity-50 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:_textfield]"
+                        className="w-full bg-slate-50 border border-slate-200 text-slate-900 dark:bg-slate-800 dark:border-white/10 dark:text-white rounded-xl pl-10 pr-22 py-3 focus:outline-none focus:border-red-600 dark:focus:bg-white/10 transition-all duration-300 ease-in-out disabled:opacity-50 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:_textfield]"
                       />
                       <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
                         <button type="button" onClick={() => adjustMonto(-10)} disabled={saving} className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-200/50 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-600 dark:text-white/70 transition-colors disabled:opacity-50">
@@ -458,7 +457,7 @@ export default function Pagos() {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="flex flex-col gap-2">
                     <label className="text-xs uppercase tracking-widest text-slate-500 dark:text-white/40 font-medium ml-1 transition-colors duration-500">Fecha de Inicio</label>
                     <div className="relative">
@@ -469,11 +468,11 @@ export default function Pagos() {
                         onChange={handleInputChange}
                         disabled={saving}
                         required
-                        className="w-full bg-slate-50 border border-slate-200 text-slate-900 dark:bg-black dark:border-white/10 dark:text-white rounded-xl px-4 py-3 focus:outline-none focus:border-red-600 dark:focus:bg-white/10 transition-all duration-300 ease-in-out disabled:opacity-50"
+                        className="w-full bg-slate-50 border border-slate-200 text-slate-900 dark:bg-slate-800 dark:border-white/10 dark:text-white rounded-xl px-4 py-3 focus:outline-none focus:border-red-600 dark:focus:bg-white/10 transition-all duration-300 ease-in-out disabled:opacity-50"
                       />
                     </div>
                   </div>
-                  
+
                   <div className="flex flex-col gap-2">
                     <label className="text-xs uppercase tracking-widest text-slate-500 dark:text-white/40 font-medium ml-1 transition-colors duration-500">Fecha de Vencimiento</label>
                     <div className="relative">
@@ -484,7 +483,7 @@ export default function Pagos() {
                         onChange={handleInputChange}
                         disabled={saving}
                         required
-                        className="w-full bg-slate-50 border border-slate-200 text-slate-900 dark:bg-black dark:border-white/10 dark:text-white rounded-xl px-4 py-3 focus:outline-none focus:border-red-600 dark:focus:bg-white/10 transition-all duration-300 ease-in-out disabled:opacity-50"
+                        className="w-full bg-slate-50 border border-slate-200 text-slate-900 dark:bg-slate-800 dark:border-white/10 dark:text-white rounded-xl px-4 py-3 focus:outline-none focus:border-red-600 dark:focus:bg-white/10 transition-all duration-300 ease-in-out disabled:opacity-50"
                       />
                     </div>
                   </div>
@@ -497,7 +496,7 @@ export default function Pagos() {
                     value={formData.metodo_pago}
                     onChange={handleInputChange}
                     disabled={saving}
-                    className="w-full bg-slate-50 border border-slate-200 text-slate-900 dark:bg-black dark:border-white/10 dark:text-white rounded-xl px-4 py-3 focus:outline-none focus:border-red-600 transition-all duration-300 ease-in-out disabled:opacity-50 appearance-none"
+                    className="w-full bg-slate-50 border border-slate-200 text-slate-900 dark:bg-slate-800 dark:border-white/10 dark:text-white rounded-xl px-4 py-3 focus:outline-none focus:border-red-600 transition-all duration-300 ease-in-out disabled:opacity-50 appearance-none"
                   >
                     {metodosPago.map(m => (
                       <option key={m} value={m}>{m}</option>
@@ -529,11 +528,11 @@ export default function Pagos() {
       {/* Modal - Confirmar Eliminar */}
       {deleteId && createPortal(
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-md transition-all duration-300 ease-in-out" onClick={() => !deleting && setDeleteId(null)} />
-          
+          <div className="absolute inset-0 bg-slate-900/40 dark:bg-slate-800/60 backdrop-blur-md transition-all duration-300 ease-in-out" onClick={() => !deleting && setDeleteId(null)} />
+
           <div className="relative w-full max-w-sm p-1.5 bg-slate-50/80 dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 rounded-[2rem] shadow-xl dark:shadow-2xl animate-in fade-in zoom-in-95 duration-300 ease-in-out">
-            <div className="p-8 bg-white dark:bg-black rounded-[calc(2rem-0.375rem)] shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] flex flex-col gap-6 text-center transition-all duration-300 ease-in-out">
-              <div className="w-16 h-16 rounded-full bg-red-50 dark:bg-red-500/10 flex items-center justify-center mx-auto">
+            <div className="p-8 bg-white dark:bg-slate-800 rounded-[calc(2rem-0.375rem)] shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] flex flex-col gap-6 text-center transition-all duration-300 ease-in-out">
+              <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center mx-auto">
                 <AlertCircle className="w-8 h-8 text-red-600 dark:text-red-500" />
               </div>
               <div>
@@ -541,14 +540,14 @@ export default function Pagos() {
                 <p className="text-sm text-slate-500 dark:text-white/50 transition-all duration-300 ease-in-out">Esta acción no se puede deshacer. Los datos se borrarán permanentemente.</p>
               </div>
               <div className="flex items-center gap-3 mt-2">
-                <button 
+                <button
                   onClick={() => setDeleteId(null)}
                   disabled={deleting}
                   className="flex-1 py-3 px-4 rounded-xl font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 dark:text-white dark:bg-white/5 dark:hover:bg-white/10 transition-all duration-300 ease-in-out disabled:opacity-50"
                 >
                   Cancelar
                 </button>
-                <button 
+                <button
                   onClick={handleDelete}
                   disabled={deleting}
                   className="flex-1 py-3 px-4 rounded-xl font-medium text-white bg-red-600 hover:bg-red-700 transition-all duration-300 ease-in-out disabled:opacity-70 flex items-center justify-center gap-2"
