@@ -15,7 +15,7 @@ export default function Alumnos() {
   const [searchTerm, setSearchTerm] = useState('');
   const [beltFilter, setBeltFilter] = useState('Todos');
   const [horariosDisponibles, setHorariosDisponibles] = useState([]);
-  
+
   // Profile Modal State
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState(null);
@@ -26,7 +26,7 @@ export default function Alumnos() {
     clasesRestantes: 0,
     loading: false
   });
-  
+
   // Form State
   const [formData, setFormData] = useState({
     nombre: '',
@@ -65,7 +65,7 @@ export default function Alumnos() {
         .order('fecha_registro', { ascending: false });
 
       if (error) throw error;
-      
+
       const now = new Date();
       const todayTime = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
 
@@ -103,7 +103,7 @@ export default function Alumnos() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     let errors = {};
     const nameRegex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/;
     const phoneRegex = /^\d{9}$/;
@@ -125,12 +125,12 @@ export default function Alumnos() {
 
     try {
       setSaving(true);
-      
+
       const payload = { ...formData };
       if (!payload.horario_id) {
         payload.horario_id = null;
       }
-      
+
       if (editId) {
         const { error } = await supabase
           .from('alumnos')
@@ -183,11 +183,11 @@ export default function Alumnos() {
         .from('alumnos')
         .delete()
         .eq('id', deleteId);
-      
+
       if (error) throw error;
       setDeleteId(null);
       await fetchAlumnos();
-    } catch(error) {
+    } catch (error) {
       console.error('Error deleting alumno:', error);
       alert('Error al eliminar el alumno.');
     } finally {
@@ -220,7 +220,7 @@ export default function Alumnos() {
         .from('pagos')
         .select('fecha_inicio, fecha_vencimiento')
         .eq('alumno_id', alumno.id);
-      
+
       let clasesRestantes = 0;
       if (todosPagos && todosPagos.length > 0) {
         // Encontrar el pago con mayor fecha de vencimiento
@@ -256,19 +256,19 @@ export default function Alumnos() {
 
   // Derived state for filtering
   const filteredAlumnos = alumnos.filter(alumno => {
-    const matchesSearch = 
-      alumno.nombre.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    const matchesSearch =
+      alumno.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
       alumno.apellidos.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     const matchesBelt = beltFilter === 'Todos' || alumno.cinturon === beltFilter;
-    
+
     return matchesSearch && matchesBelt;
   });
 
   return (
     <DashboardLayout>
       <div className="flex flex-col gap-8">
-        
+
         {/* Header Section */}
         <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex flex-col gap-2">
@@ -281,13 +281,13 @@ export default function Alumnos() {
               Directorio de <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-red-800 dark:from-red-500 dark:to-red-700">Alumnos</span>
             </h1>
           </div>
-          
-          <button 
+
+          <button
             onClick={openNewModal}
             className="group relative flex items-center justify-between bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-black px-6 py-3 rounded-full font-medium dark:hover:bg-gray-100 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98] shrink-0"
           >
             <span className="relative z-10 pr-4">Nuevo Alumno</span>
-            <div className="relative z-10 w-8 h-8 rounded-full bg-white/20 group-hover:bg-white/30 dark:bg-black/10 flex items-center justify-center dark:group-hover:bg-black/20 transition-colors duration-500 shrink-0">
+            <div className="relative z-10 w-8 h-8 rounded-full bg-white/20 group-hover:bg-white/30 dark:bg-slate-800/10 flex items-center justify-center dark:group-hover:bg-black/20 transition-colors duration-500 shrink-0">
               <Plus className="w-4 h-4 group-hover:scale-110 transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]" strokeWidth={2.5} />
             </div>
           </button>
@@ -304,10 +304,10 @@ export default function Alumnos() {
               placeholder="Buscar por nombre o apellido..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-white dark:bg-black border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl py-3 pl-11 pr-4 focus:outline-none focus:border-red-600 dark:focus:border-red-500 transition-all duration-300 ease-in-out shadow-sm"
+              className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl py-3 pl-11 pr-4 focus:outline-none focus:border-red-600 dark:focus:border-red-500 transition-all duration-300 ease-in-out shadow-sm"
             />
           </div>
-          
+
           <div className="relative w-full sm:w-56 group/filter">
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
               <Filter className="w-4 h-4 text-slate-400 group-focus-within/filter:text-red-600 dark:text-white/40 dark:group-focus-within/filter:text-red-500 transition-all duration-300 ease-in-out" />
@@ -315,7 +315,7 @@ export default function Alumnos() {
             <select
               value={beltFilter}
               onChange={(e) => setBeltFilter(e.target.value)}
-              className="w-full bg-white dark:bg-black border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl py-3 pl-11 pr-4 focus:outline-none focus:border-red-600 dark:focus:border-red-500 transition-all duration-300 ease-in-out shadow-sm appearance-none"
+              className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl py-3 pl-11 pr-4 focus:outline-none focus:border-red-600 dark:focus:border-red-500 transition-all duration-300 ease-in-out shadow-sm appearance-none"
             >
               <option value="Todos">Todos los cinturones</option>
               {cinturones.map(c => (
@@ -326,9 +326,9 @@ export default function Alumnos() {
         </div>
 
         {/* Table Container (Double-Bezel approach) */}
-        <div className="p-1.5 bg-slate-50/80 dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 rounded-[2rem] shadow-xl dark:shadow-2xl backdrop-blur-xl transition-colors duration-700 w-full overflow-hidden">
-          <div className="bg-white dark:bg-black rounded-[calc(2rem-0.375rem)] shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] flex flex-col w-full overflow-x-auto custom-scrollbar relative min-h-[400px] transition-colors duration-500">
-            
+        <div className="p-1.5 bg-slate-50/80 dark:bg-white/[0.02] border border-slate-300 dark:border-white/20 border-t-[4px] border-t-red-600 dark:border-t-red-600 rounded-[2rem] shadow-[0_12px_40px_-12px_rgba(0,0,0,0.15)] dark:shadow-[0_12px_40px_-12px_rgba(255,255,255,0.05)] backdrop-blur-xl transition-all duration-700 w-full overflow-hidden">
+          <div className="bg-white dark:bg-slate-800 rounded-[calc(2rem-0.375rem)] shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] flex flex-col w-full overflow-x-auto custom-scrollbar relative min-h-[400px] transition-colors duration-500">
+
             {loading ? (
               <div className="absolute inset-0 flex items-center justify-center">
                 <Loader2 className="w-8 h-8 text-red-600 animate-spin" />
@@ -342,7 +342,7 @@ export default function Alumnos() {
                   {alumnos.length === 0 ? 'Sin alumnos registrados' : 'Sin resultados de búsqueda'}
                 </h3>
                 <p className="text-slate-500 dark:text-white/60 mt-2 max-w-sm text-sm transition-colors duration-500">
-                  {alumnos.length === 0 
+                  {alumnos.length === 0
                     ? 'Aún no hay alumnos en la base de datos. Haz clic en "Nuevo Alumno" para empezar a registrarlos.'
                     : 'No se encontraron alumnos que coincidan con los filtros aplicados.'}
                 </p>
@@ -356,8 +356,8 @@ export default function Alumnos() {
                     <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-white/40">Cinturón</th>
                     <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-white/40">Horario</th>
                     <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-white/40">Registro</th>
-                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-white/40">Estado Pago</th>
-                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-white/40 text-right">Acciones</th>
+                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-white/40 text-center">Estado Pago</th>
+                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-white/40 text-center">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 dark:divide-white/5 transition-all duration-300 ease-in-out">
@@ -385,47 +385,47 @@ export default function Alumnos() {
                           {new Date(alumno.fecha_registro).toLocaleDateString()}
                         </div>
                       </td>
-                      <td className="px-8 py-5">
+                      <td className="px-8 py-5 text-center">
                         {alumno.paymentStatus === 'ok' && (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20">
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-600 border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20">
                             Al Día
                           </span>
                         )}
                         {alumno.paymentStatus === 'warning' && (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-600 border border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20">
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-600 border border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20">
                             Por Vencer
                           </span>
                         )}
                         {alumno.paymentStatus === 'expired' && (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-red-50 text-red-600 border border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/20">
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-red-50 text-red-600 border border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/20">
                             Vencido
                           </span>
                         )}
                         {alumno.paymentStatus === 'none' && (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500 border border-slate-200 dark:bg-white/10 dark:text-white/50 dark:border-white/10">
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-500 border border-slate-200 dark:bg-white/10 dark:text-white/50 dark:border-white/10">
                             Sin Pagos
                           </span>
                         )}
                       </td>
-                      <td className="px-8 py-5 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <button 
+                      <td className="px-8 py-5 text-center">
+                        <div className="flex items-center justify-center gap-2">
+                          <button
                             onClick={() => openProfileModal(alumno)}
-                            className="p-2 text-slate-500 hover:text-blue-600 dark:text-white/60 dark:hover:text-blue-400 transition-all duration-300 ease-in-out rounded-lg hover:bg-blue-50 dark:hover:bg-blue-500/10"
+                            className="p-2 text-slate-500 hover:text-slate-900 dark:text-white/60 dark:hover:text-white transition-all duration-300 ease-in-out rounded-lg hover:bg-slate-200 dark:hover:bg-white/10"
                             title="Ver Expediente"
                           >
                             <Eye className="w-[18px] h-[18px] transition-transform duration-300 hover:scale-110" />
                           </button>
-                          <button 
+                          <button
                             onClick={() => openEditModal(alumno)}
                             className="p-2 text-slate-500 hover:text-slate-900 dark:text-white/60 dark:hover:text-white transition-all duration-300 ease-in-out rounded-lg hover:bg-slate-200 dark:hover:bg-white/10"
                             title="Editar"
                           >
                             <Edit2 className="w-[18px] h-[18px] transition-transform duration-300 hover:scale-110" />
                           </button>
-                          <button 
+                          <button
                             onClick={() => setDeleteId(alumno.id)}
-                            className="p-2 text-slate-500 hover:text-red-600 dark:text-white/60 dark:hover:text-red-500 transition-all duration-300 ease-in-out rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10"
+                            className="p-2 text-slate-500 hover:text-red-600 dark:text-white/60 dark:hover:text-red-500 transition-all duration-300 ease-in-out rounded-lg hover:bg-slate-200 dark:hover:bg-white/10"
                             title="Eliminar"
                           >
                             <Trash2 className="w-[18px] h-[18px] transition-transform duration-300 hover:scale-110" />
@@ -445,16 +445,16 @@ export default function Alumnos() {
       {/* Modal - Nuevo Alumno */}
       {isModalOpen && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-md transition-all duration-300 ease-in-out" onClick={() => !saving && setIsModalOpen(false)} />
-          
+          <div className="absolute inset-0 bg-slate-900/40 dark:bg-slate-800/60 backdrop-blur-md transition-all duration-300 ease-in-out" onClick={() => !saving && setIsModalOpen(false)} />
+
           <div className="relative w-full max-w-lg p-1.5 bg-slate-50/80 dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 rounded-[2rem] shadow-xl dark:shadow-2xl animate-in fade-in zoom-in-95 duration-300 ease-in-out">
-            <div className="p-8 bg-white dark:bg-black rounded-[calc(2rem-0.375rem)] shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] flex flex-col gap-6 transition-all duration-300 ease-in-out">
-              
+            <div className="p-8 bg-white dark:bg-slate-800 rounded-[calc(2rem-0.375rem)] shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] flex flex-col gap-6 transition-all duration-300 ease-in-out">
+
               <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white transition-all duration-300 ease-in-out">
                   {editId ? 'Editar Alumno' : 'Nuevo Alumno'}
                 </h2>
-                <button 
+                <button
                   onClick={() => setIsModalOpen(false)}
                   disabled={saving}
                   className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-900 dark:bg-white/5 dark:text-white/70 flex items-center justify-center dark:hover:bg-white/10 dark:hover:text-white transition-all duration-300 ease-in-out disabled:opacity-50"
@@ -526,7 +526,7 @@ export default function Alumnos() {
                     value={formData.cinturon}
                     onChange={handleInputChange}
                     disabled={saving}
-                    className="w-full bg-slate-50 border border-slate-200 text-slate-900 dark:bg-black dark:border-white/10 dark:text-white rounded-xl px-4 py-3 focus:outline-none focus:border-red-500 transition-all duration-300 ease-in-out disabled:opacity-50 appearance-none"
+                    className="w-full bg-slate-50 border border-slate-200 text-slate-900 dark:bg-slate-800 dark:border-white/10 dark:text-white rounded-xl px-4 py-3 focus:outline-none focus:border-red-500 transition-all duration-300 ease-in-out disabled:opacity-50 appearance-none"
                   >
                     {cinturones.map(c => (
                       <option key={c} value={c}>{c}</option>
@@ -541,7 +541,7 @@ export default function Alumnos() {
                     value={formData.horario_id}
                     onChange={handleInputChange}
                     disabled={saving}
-                    className="w-full bg-slate-50 border border-slate-200 text-slate-900 dark:bg-black dark:border-white/10 dark:text-white rounded-xl px-4 py-3 focus:outline-none focus:border-red-500 transition-all duration-300 ease-in-out disabled:opacity-50 appearance-none"
+                    className="w-full bg-slate-50 border border-slate-200 text-slate-900 dark:bg-slate-800 dark:border-white/10 dark:text-white rounded-xl px-4 py-3 focus:outline-none focus:border-red-500 transition-all duration-300 ease-in-out disabled:opacity-50 appearance-none"
                   >
                     <option value="">Sin horario asignado</option>
                     {horariosDisponibles.map(h => (
@@ -574,11 +574,11 @@ export default function Alumnos() {
       {/* Modal - Confirmar Eliminar */}
       {deleteId && createPortal(
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-md transition-all duration-300 ease-in-out" onClick={() => !deleting && setDeleteId(null)} />
-          
+          <div className="absolute inset-0 bg-slate-900/40 dark:bg-slate-800/60 backdrop-blur-md transition-all duration-300 ease-in-out" onClick={() => !deleting && setDeleteId(null)} />
+
           <div className="relative w-full max-w-sm p-1.5 bg-slate-50/80 dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 rounded-[2rem] shadow-xl dark:shadow-2xl animate-in fade-in zoom-in-95 duration-300 ease-in-out">
-            <div className="p-8 bg-white dark:bg-black rounded-[calc(2rem-0.375rem)] shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] flex flex-col gap-6 text-center transition-all duration-300 ease-in-out">
-              <div className="w-16 h-16 rounded-full bg-red-50 dark:bg-red-500/10 flex items-center justify-center mx-auto">
+            <div className="p-8 bg-white dark:bg-slate-800 rounded-[calc(2rem-0.375rem)] shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] flex flex-col gap-6 text-center transition-all duration-300 ease-in-out">
+              <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center mx-auto">
                 <AlertCircle className="w-8 h-8 text-red-600 dark:text-red-500" />
               </div>
               <div>
@@ -586,14 +586,14 @@ export default function Alumnos() {
                 <p className="text-sm text-slate-500 dark:text-white/50 transition-all duration-300 ease-in-out">Esta acción no se puede deshacer. Los datos se borrarán permanentemente.</p>
               </div>
               <div className="flex items-center gap-3 mt-2">
-                <button 
+                <button
                   onClick={() => setDeleteId(null)}
                   disabled={deleting}
                   className="flex-1 py-3 px-4 rounded-xl font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 dark:text-white dark:bg-white/5 dark:hover:bg-white/10 transition-all duration-300 ease-in-out disabled:opacity-50"
                 >
                   Cancelar
                 </button>
-                <button 
+                <button
                   onClick={handleDelete}
                   disabled={deleting}
                   className="flex-1 py-3 px-4 rounded-xl font-medium text-white bg-red-600 hover:bg-red-700 transition-all duration-300 ease-in-out disabled:opacity-70 flex items-center justify-center gap-2"
@@ -611,11 +611,11 @@ export default function Alumnos() {
       {/* Modal - Perfil de Alumno (Expediente) */}
       {isProfileModalOpen && selectedProfile && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-md transition-all duration-300 ease-in-out" onClick={() => setIsProfileModalOpen(false)} />
-          
+          <div className="absolute inset-0 bg-slate-900/40 dark:bg-slate-800/60 backdrop-blur-md transition-all duration-300 ease-in-out" onClick={() => setIsProfileModalOpen(false)} />
+
           <div className="relative w-full max-w-4xl p-1.5 bg-slate-50/80 dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 rounded-[2rem] shadow-xl dark:shadow-2xl animate-in fade-in zoom-in-95 duration-300 ease-in-out">
-            <div className="p-6 lg:p-8 bg-white dark:bg-black rounded-[calc(2rem-0.375rem)] shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] flex flex-col max-h-[85vh] lg:max-h-[80vh] transition-all duration-300 ease-in-out overflow-hidden">
-              
+            <div className="p-6 lg:p-8 bg-white dark:bg-slate-800 rounded-[calc(2rem-0.375rem)] shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] flex flex-col max-h-[85vh] lg:max-h-[80vh] transition-all duration-300 ease-in-out overflow-hidden">
+
               {/* Header del Perfil */}
               <div className="flex items-start justify-between pb-6 border-b border-slate-200 dark:border-white/10 shrink-0">
                 <div className="flex flex-col gap-1">
@@ -634,13 +634,13 @@ export default function Alumnos() {
                         <Loader2 className="w-3 h-3 animate-spin text-slate-500" />
                       </div>
                     ) : (
-                      <span className={`px-3 py-1 rounded-full border font-bold ${profileStats.clasesRestantes <= 0 ? 'bg-red-50 text-red-600 border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/20' : 'bg-green-50 text-green-600 border-green-200 dark:bg-green-500/10 dark:text-green-400 dark:border-green-500/20'}`}>
+                      <span className={`px-3 py-1 rounded-full border font-bold ${profileStats.clasesRestantes <= 0 ? 'bg-red-50 text-red-600 border-red-200 dark:bg-red-500/20 dark:text-red-400 dark:border-red-500/40' : 'bg-green-50 text-green-600 border-green-200 dark:bg-green-500/20 dark:text-green-400 dark:border-green-500/40'}`}>
                         Clases Restantes: {profileStats.clasesRestantes}
                       </span>
                     )}
                   </div>
                 </div>
-                <button 
+                <button
                   onClick={() => setIsProfileModalOpen(false)}
                   className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-900 dark:bg-white/5 dark:text-white/70 flex items-center justify-center dark:hover:bg-white/10 dark:hover:text-white transition-all duration-300 ease-in-out"
                 >
@@ -650,23 +650,23 @@ export default function Alumnos() {
 
               {/* Contenido del Perfil */}
               <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8 overflow-y-auto custom-scrollbar">
-                
+
                 {/* Lado Izquierdo: Pagos */}
                 <div className="flex flex-col gap-6 lg:border-r border-slate-200 dark:border-white/10 lg:pr-8">
                   <h3 className="text-xs uppercase tracking-[0.2em] font-semibold text-slate-400 dark:text-white/30">Pagos Recientes</h3>
-                  
+
                   {profileStats.loading ? (
                     <div className="flex justify-center py-10">
                       <Loader2 className="w-6 h-6 animate-spin text-slate-300" />
                     </div>
                   ) : profileStats.pagosRecientes.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center text-center p-6 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/5">
-                      <span className="text-slate-400 dark:text-white/40 text-sm">No hay pagos registrados.</span>
+                    <div className="flex flex-col items-center justify-center text-center p-6 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/10">
+                      <span className="text-slate-400 dark:text-white/60 text-sm">No hay pagos registrados.</span>
                     </div>
                   ) : (
                     <div className="flex flex-col gap-3">
                       {profileStats.pagosRecientes.map(pago => (
-                        <div key={pago.id} className="flex flex-col p-4 bg-slate-50 dark:bg-white/[0.03] rounded-2xl border border-slate-100 dark:border-white/5 transition-colors duration-300">
+                        <div key={pago.id} className="flex flex-col p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/10 transition-colors duration-300">
                           <div className="flex items-center justify-between mb-1">
                             <span className="font-bold text-slate-900 dark:text-white">S/ {pago.monto}</span>
                             <span className="text-xs font-medium text-slate-500 dark:text-white/50">{new Date(pago.fecha_pago).toLocaleDateString()}</span>
@@ -688,10 +688,10 @@ export default function Alumnos() {
                     </h3>
                   </div>
 
-                  <div className="bg-slate-50/50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-3xl p-5">
+                  <div className="bg-slate-50/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-3xl p-5">
                     {/* Controles de navegacion de mes */}
                     <div className="flex items-center justify-between mb-4">
-                      <button 
+                      <button
                         onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1))}
                         className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-white/10 text-slate-500 dark:text-white/50 transition-colors"
                       >
@@ -700,7 +700,7 @@ export default function Alumnos() {
                       <h4 className="text-lg font-bold text-slate-900 dark:text-white capitalize">
                         {currentMonth.toLocaleString('es-ES', { month: 'long', year: 'numeric' })}
                       </h4>
-                      <button 
+                      <button
                         onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1))}
                         className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-white/10 text-slate-500 dark:text-white/50 transition-colors"
                       >
@@ -714,31 +714,31 @@ export default function Alumnos() {
                         <div key={d} className="text-center text-[10px] uppercase font-bold text-slate-400 dark:text-white/30">{d}</div>
                       ))}
                     </div>
-                    
+
                     {/* Cuadricula del Mes */}
                     <div className="grid grid-cols-7 gap-2 min-h-[260px] sm:min-h-[280px] content-start">
                       {(() => {
                         const year = currentMonth.getFullYear();
                         const month = currentMonth.getMonth();
-                        
+
                         // 0 = Domingo, 1 = Lunes
                         const firstDay = new Date(year, month, 1).getDay();
                         // Ajustamos para que la semana empiece en Lunes (0=Lunes, 6=Domingo)
                         const startOffset = firstDay === 0 ? 6 : firstDay - 1;
-                        
+
                         const daysInMonth = new Date(year, month + 1, 0).getDate();
                         const now = new Date();
                         const todayTime = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-                        
+
                         const diasSemana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
                         const diasTurno = selectedProfile.horarios?.dias || [];
-                        
+
                         const { fecha_inicio, fecha_vencimiento } = profileStats.latestPago || {};
                         const inicioTime = fecha_inicio ? new Date(`${fecha_inicio}T00:00:00`).getTime() : null;
                         const finTime = fecha_vencimiento ? new Date(`${fecha_vencimiento}T23:59:59`).getTime() : null;
 
                         const cells = [];
-                        
+
                         // Empty slots before 1st of month
                         for (let i = 0; i < startOffset; i++) {
                           cells.push(<div key={`empty-${i}`} className="w-8 h-8 sm:w-9 sm:h-9 mx-auto rounded-xl" />);
@@ -753,10 +753,10 @@ export default function Alumnos() {
                           const dateStr = `${year}-${mm}-${dd}`;
                           const dateKey = `${mm}-${dd}`;
                           const nombreDia = diasSemana[dateObj.getDay()];
-                          
+
                           const isWithinRange = inicioTime && finTime && cellTime >= inicioTime && cellTime <= finTime;
                           const shouldAttend = isWithinRange && diasTurno.includes(nombreDia) && !FERIADOS_PERU.includes(dateKey);
-                          
+
                           const attended = profileStats.asistenciasMes.includes(dateStr);
                           const isPastStrict = cellTime < todayTime; // Strictly before today
                           const isFutureOrToday = cellTime >= todayTime;
@@ -777,9 +777,9 @@ export default function Alumnos() {
                             textColor = "text-white font-bold";
                           } else if (shouldAttend && isFutureOrToday) {
                             // GRIS (Pendiente)
-                            bgColor = "bg-gray-200 dark:bg-gray-800";
-                            borderColor = "border-gray-300 dark:border-gray-700";
-                            textColor = "text-slate-600 dark:text-white/70 font-bold";
+                            bgColor = "bg-gray-200 dark:bg-white/10";
+                            borderColor = "border-gray-300 dark:border-white/20";
+                            textColor = "text-slate-600 dark:text-white/90 font-bold";
                           } else {
                             // NEUTRO (Libre, transparente)
                             bgColor = "bg-transparent";
@@ -788,8 +788,8 @@ export default function Alumnos() {
                           }
 
                           cells.push(
-                            <div 
-                              key={`day-${d}`} 
+                            <div
+                              key={`day-${d}`}
                               className={`w-8 h-8 sm:w-9 sm:h-9 mx-auto flex items-center justify-center rounded-lg border transition-colors duration-300 ${bgColor} ${borderColor}`}
                               title={dateStr}
                             >
@@ -797,11 +797,11 @@ export default function Alumnos() {
                             </div>
                           );
                         }
-                        
+
                         return cells;
                       })()}
                     </div>
-                    
+
                     <div className="flex items-center gap-6 mt-6 justify-center">
                       <div className="flex items-center gap-2">
                         <div className="w-3 h-3 rounded-full bg-emerald-500" />
