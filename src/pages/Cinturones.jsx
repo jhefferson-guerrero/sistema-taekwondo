@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import DashboardLayout from '../components/DashboardLayout';
 import { supabase } from '../services/supabaseClient';
 import { Award, Search, Filter, Loader2, X, Users, History, ArrowUpCircle } from 'lucide-react';
+import Pagination from '../components/Pagination';
 
 export default function Cinturones() {
   const [alumnos, setAlumnos] = useState([]);
@@ -27,25 +28,35 @@ export default function Cinturones() {
 
   const cinturones = ['Blanco', 'Punta Amarilla', 'Amarillo', 'Punta Verde', 'Verde', 'Punta Azul', 'Azul', 'Punta Roja', 'Rojo', 'Punta Negra', 'Negro'];
 
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
+
   useEffect(() => {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, beltFilter]);
+
   const fetchData = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      const { data: rawData, error } = await supabase
         .from('alumnos')
         .select(`
           *,
-          asistencias ( fecha_asistencia ),
+          asistencias ( fecha_asistencia, estado ),
           historial_cinturones ( id, cinturon_anterior, cinturon_nuevo, fecha_examen, comentarios )
         `)
         .order('fecha_registro', { ascending: false });
 
       if (error) throw error;
 
-      const processedAlumnos = (data || []).map(a => {
+      const data = (rawData || []).filter(a => a.estado !== 'Inactivo');
+
+      const processedAlumnos = data.map(a => {
         const historial = [...(a.historial_cinturones || [])].sort((x, y) => new Date(y.fecha_examen) - new Date(x.fecha_examen));
 
         // Determinar la fecha desde la cual contar asistencias
@@ -58,6 +69,7 @@ export default function Cinturones() {
         fechaReferencia.setHours(0, 0, 0, 0);
 
         const clasesAcumuladas = (a.asistencias || []).filter(asist => {
+          if (asist.estado === 'Congelado') return false;
           const fechaAsist = new Date(asist.fecha_asistencia);
           fechaAsist.setHours(0, 0, 0, 0);
           return fechaAsist >= fechaReferencia;
@@ -152,6 +164,9 @@ export default function Cinturones() {
     return matchesSearch && matchesBelt;
   });
 
+  const totalPages = Math.ceil(filteredAlumnos.length / itemsPerPage);
+  const currentAlumnos = filteredAlumnos.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
   return (
     <DashboardLayout>
       <div className="flex flex-col gap-8">
@@ -203,8 +218,8 @@ export default function Cinturones() {
         </div>
 
         {/* Table Container */}
-        <div className="p-1.5 bg-slate-50/80 dark:bg-white/[0.02] border border-slate-300 dark:border-white/20 border-t-[4px] border-t-red-600 dark:border-t-red-600 rounded-[2rem] shadow-[0_12px_40px_-12px_rgba(0,0,0,0.15)] dark:shadow-[0_12px_40px_-12px_rgba(255,255,255,0.05)] backdrop-blur-xl transition-all duration-700 w-full overflow-hidden">
-          <div className="bg-white dark:bg-slate-800 rounded-[calc(2rem-0.375rem)] shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] flex flex-col w-full overflow-x-auto custom-scrollbar relative min-h-[400px] transition-colors duration-500">
+        <div className="p-1.5 bg-slate-50/80 dark:bg-white/[0.02] border border-slate-300 dark:border-white/20 border-t-[4px] border-t-red-600 dark:border-t-red-600 rounded-[2rem] shadow-[0_12px_40px_-12px_rgba(0,0,0,0.15)] dark:shadow-[0_12px_40px_-12px_rgba(255,255,255,0.05)] backdrop-blur-xl transition-all duration-700 w-full overflow-hidden flex flex-col">
+          <div className="bg-white dark:bg-slate-800 rounded-t-[calc(2rem-0.375rem)] flex-1 shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] flex flex-col w-full overflow-x-auto custom-scrollbar relative min-h-[400px] transition-colors duration-500">
 
             {loading ? (
               <div className="absolute inset-0 flex items-center justify-center">
@@ -223,7 +238,7 @@ export default function Cinturones() {
                 </p>
               </div>
             ) : (
-              <table className="w-full text-left border-collapse animate-in fade-in duration-700">
+              <table className="w-full text-left border-collapse whitespace-nowrap animate-in fade-in duration-700">
                 <thead>
                   <tr className="border-b border-slate-200 dark:border-white/10 transition-colors duration-500">
                     <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-white/40">Alumno</th>
@@ -233,7 +248,7 @@ export default function Cinturones() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 dark:divide-white/5 transition-all duration-300 ease-in-out">
-                  {filteredAlumnos.map((alumno) => (
+                  {currentAlumnos.map((alumno) => (
                     <tr key={alumno.id} className="hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-all duration-300 ease-in-out group">
                       <td className="px-8 py-5">
                         <div className="font-semibold text-slate-900 dark:text-white transition-colors duration-300">{alumno.nombre} {alumno.apellidos}</div>
@@ -278,6 +293,13 @@ export default function Cinturones() {
               </table>
             )}
           </div>
+          
+          <Pagination 
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={filteredAlumnos.length}
+            onPageChange={setCurrentPage}
+          />
         </div>
       </div>
 

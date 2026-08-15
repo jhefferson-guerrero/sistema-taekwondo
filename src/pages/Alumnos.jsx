@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import DashboardLayout from '../components/DashboardLayout';
 import { supabase } from '../services/supabaseClient';
-import { Plus, Users, X, Loader2, Calendar, Edit2, Trash2, AlertCircle, Search, Filter, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Users, X, Loader2, Calendar, Edit2, Trash2, AlertCircle, Search, Filter, Eye, ChevronLeft, ChevronRight, Snowflake, Sun, RefreshCcw } from 'lucide-react';
 import { calcularClasesRestantes, FERIADOS_PERU } from '../utils/membresiaUtils';
+import Pagination from '../components/Pagination';
 
 export default function Alumnos() {
   const [alumnos, setAlumnos] = useState([]);
@@ -11,9 +12,11 @@ export default function Alumnos() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editId, setEditId] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
+  const [hardDeleteId, setHardDeleteId] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [beltFilter, setBeltFilter] = useState('Todos');
+  const [statusFilter, setStatusFilter] = useState('Activo');
   const [horariosDisponibles, setHorariosDisponibles] = useState([]);
 
   // Profile Modal State
@@ -27,6 +30,22 @@ export default function Alumnos() {
     loading: false
   });
 
+  // Freeze Modal State
+  const [isFreezeModalOpen, setIsFreezeModalOpen] = useState(false);
+  const [freezeData, setFreezeData] = useState({
+    fechaInicio: '',
+    fechaFin: ''
+  });
+  const [freezing, setFreezing] = useState(false);
+
+  // Unfreeze Modal State
+  const [isUnfreezeModalOpen, setIsUnfreezeModalOpen] = useState(false);
+  const [unfreezeData, setUnfreezeData] = useState({
+    fechaInicio: '',
+    fechaFin: ''
+  });
+  const [unfreezing, setUnfreezing] = useState(false);
+
   // Form State
   const [formData, setFormData] = useState({
     nombre: '',
@@ -38,10 +57,18 @@ export default function Alumnos() {
   const [saving, setSaving] = useState(false);
   const [formErrors, setFormErrors] = useState({});
 
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
+
   useEffect(() => {
     fetchAlumnos();
     fetchHorarios();
   }, []);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, beltFilter, statusFilter]);
 
   const fetchHorarios = async () => {
     try {
@@ -157,6 +184,162 @@ export default function Alumnos() {
     }
   };
 
+  const handleFreezeSubmit = async (e) => {
+    e.preventDefault();
+    if (!freezeData.fechaInicio || !freezeData.fechaFin || !selectedProfile || !profileStats.latestPago) {
+      alert('Faltan datos para congelar la membresía o el alumno no tiene un pago vigente.');
+      return;
+    }
+
+    const start = new Date(`${freezeData.fechaInicio}T00:00:00`);
+    const end = new Date(`${freezeData.fechaFin}T00:00:00`);
+
+    if (end < start) {
+      alert('La fecha de fin no puede ser menor a la fecha de inicio.');
+      return;
+    }
+
+    // Calcular diferencia en días (inclusivo)
+    const diffTime = Math.abs(end - start);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+
+    try {
+      setFreezing(true);
+
+      // 1. Calcular nueva fecha_vencimiento
+      const oldVencimiento = new Date(`${profileStats.latestPago.fecha_vencimiento}T00:00:00`);
+      oldVencimiento.setDate(oldVencimiento.getDate() + diffDays);
+      const newVencimientoStr = oldVencimiento.toISOString().split('T')[0];
+
+      // 2. Actualizar el pago en la BD
+      const { error: pagoError } = await supabase
+        .from('pagos')
+        .update({ fecha_vencimiento: newVencimientoStr })
+        .eq('id', profileStats.latestPago.id);
+
+      if (pagoError) throw pagoError;
+
+      // 3. Insertar registros de asistencia 'Congelado' para el mapa de calor
+      const asistenciasCongeladas = [];
+      let currentDate = new Date(start);
+      // Seteamos al mediodía local para evitar que al pasar a UTC retroceda de día
+      currentDate.setHours(12, 0, 0, 0);
+      const endDate = new Date(end);
+      endDate.setHours(23, 59, 59, 999);
+
+      while (currentDate <= endDate) {
+        asistenciasCongeladas.push({
+          alumno_id: selectedProfile.id,
+          estado: 'Congelado',
+          fecha_asistencia: currentDate.toISOString()
+        });
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+
+      const { error: asistenciaError } = await supabase
+        .from('asistencias')
+        .insert(asistenciasCongeladas);
+
+      if (asistenciaError) {
+        console.warn('No se pudieron guardar los registros de congelamiento en el mapa de calor:', asistenciaError);
+        // No bloqueamos el flujo si esto falla, lo importante era extender el pago
+      }
+
+      // 4. Limpiar y refrescar
+      setIsFreezeModalOpen(false);
+      setFreezeData({ fechaInicio: '', fechaFin: '' });
+      await openProfileModal(selectedProfile); // Refresca el expediente actual
+      await fetchAlumnos(); // Refresca la tabla principal de fondo
+
+    } catch (error) {
+      console.error('Error congelando membresía:', error);
+      alert('Error al congelar la membresía. Inténtalo de nuevo.');
+    } finally {
+      setFreezing(false);
+    }
+  };
+
+  const handleUnfreezeSubmit = async (e) => {
+    e.preventDefault();
+    if (!unfreezeData.fechaInicio || !unfreezeData.fechaFin || !selectedProfile || !profileStats.latestPago) {
+      alert('Faltan datos para descongelar la membresía o el alumno no tiene un pago vigente.');
+      return;
+    }
+
+    const start = new Date(`${unfreezeData.fechaInicio}T00:00:00`);
+    const end = new Date(`${unfreezeData.fechaFin}T00:00:00`);
+
+    if (end < start) {
+      alert('La fecha de fin no puede ser menor a la fecha de inicio.');
+      return;
+    }
+
+    try {
+      setUnfreezing(true);
+
+      // Formateamos las fechas para buscar en la BD (cubriendo todo el día local)
+      const startBound = new Date(start);
+      startBound.setHours(0, 0, 0, 0);
+      const startIso = startBound.toISOString();
+
+      const endBound = new Date(end);
+      endBound.setHours(23, 59, 59, 999);
+      const endIso = endBound.toISOString();
+
+      // 1. Buscar cuántos registros "Congelado" hay en ese rango
+      const { data: asistenciasABorrar, error: fetchError } = await supabase
+        .from('asistencias')
+        .select('id')
+        .eq('alumno_id', selectedProfile.id)
+        .eq('estado', 'Congelado')
+        .gte('fecha_asistencia', startIso)
+        .lte('fecha_asistencia', endIso);
+
+      if (fetchError) throw fetchError;
+
+      const diasADescontar = asistenciasABorrar ? asistenciasABorrar.length : 0;
+
+      if (diasADescontar === 0) {
+        alert('No se encontraron días "Congelados" en el rango seleccionado.');
+        setUnfreezing(false);
+        return;
+      }
+
+      // 2. Eliminar esos registros
+      const idsABorrar = asistenciasABorrar.map(a => a.id);
+      const { error: deleteError } = await supabase
+        .from('asistencias')
+        .delete()
+        .in('id', idsABorrar);
+
+      if (deleteError) throw deleteError;
+
+      // 3. Restar esos días de la fecha de vencimiento actual
+      const oldVencimiento = new Date(`${profileStats.latestPago.fecha_vencimiento}T00:00:00`);
+      oldVencimiento.setDate(oldVencimiento.getDate() - diasADescontar);
+      const newVencimientoStr = oldVencimiento.toISOString().split('T')[0];
+
+      const { error: pagoError } = await supabase
+        .from('pagos')
+        .update({ fecha_vencimiento: newVencimientoStr })
+        .eq('id', profileStats.latestPago.id);
+
+      if (pagoError) throw pagoError;
+
+      // 4. Limpiar y refrescar
+      setIsUnfreezeModalOpen(false);
+      setUnfreezeData({ fechaInicio: '', fechaFin: '' });
+      await openProfileModal(selectedProfile);
+      await fetchAlumnos();
+
+    } catch (error) {
+      console.error('Error descongelando membresía:', error);
+      alert('Error al descongelar la membresía. Inténtalo de nuevo.');
+    } finally {
+      setUnfreezing(false);
+    }
+  };
+
   const openNewModal = () => {
     setEditId(null);
     setFormData({ nombre: '', apellidos: '', telefono_padres: '', cinturon: 'Blanco', horario_id: '' });
@@ -181,15 +364,73 @@ export default function Alumnos() {
       setDeleting(true);
       const { error } = await supabase
         .from('alumnos')
-        .delete()
+        .update({ estado: 'Inactivo' })
         .eq('id', deleteId);
 
       if (error) throw error;
       setDeleteId(null);
       await fetchAlumnos();
     } catch (error) {
-      console.error('Error deleting alumno:', error);
-      alert('Error al eliminar el alumno.');
+      console.error('Error desactivando alumno:', error);
+      alert('Error al desactivar el alumno.');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleHardDelete = async () => {
+    if (!hardDeleteId) return;
+    try {
+      setDeleting(true);
+
+      // Verificación manual de seguridad (por si Supabase tiene ON DELETE CASCADE)
+      const [pagosCheck, asistenciasCheck, gradosCheck] = await Promise.all([
+        supabase.from('pagos').select('id').eq('alumno_id', hardDeleteId).limit(1),
+        supabase.from('asistencias').select('id').eq('alumno_id', hardDeleteId).limit(1),
+        supabase.from('historial_cinturones').select('id').eq('alumno_id', hardDeleteId).limit(1)
+      ]);
+
+      const tienePagos = pagosCheck.data && pagosCheck.data.length > 0;
+      const tieneAsistencias = asistenciasCheck.data && asistenciasCheck.data.length > 0;
+      const tieneGrados = gradosCheck.data && gradosCheck.data.length > 0;
+
+      if (tienePagos || tieneAsistencias || tieneGrados) {
+        alert('❌ SEGURIDAD ACTIVADA:\n\nNo se puede eliminar definitivamente este alumno porque tiene historial registrado (pagos, asistencias o grados). \n\nSi lo eliminas, su historial también se destruirá automáticamente y cuadrará mal tus reportes. Por favor, mantenlo como "Inactivo".');
+        setHardDeleteId(null);
+        return;
+      }
+
+      // Si no tiene nada, procedemos a borrar
+      const { error } = await supabase
+        .from('alumnos')
+        .delete()
+        .eq('id', hardDeleteId);
+
+      if (error) throw error;
+      
+      setHardDeleteId(null);
+      await fetchAlumnos();
+    } catch (error) {
+      console.error('Error eliminando alumno:', error);
+      alert('Error al eliminar permanentemente el alumno.');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleRestore = async (id) => {
+    try {
+      setDeleting(true); // Reusing deleting state for the loader/disable
+      const { error } = await supabase
+        .from('alumnos')
+        .update({ estado: 'Activo' })
+        .eq('id', id);
+
+      if (error) throw error;
+      await fetchAlumnos();
+    } catch (error) {
+      console.error('Error restaurando alumno:', error);
+      alert('Error al restaurar el alumno.');
     } finally {
       setDeleting(false);
     }
@@ -212,13 +453,13 @@ export default function Alumnos() {
       // 2. Asistencias (Historial completo para navegación)
       const { data: asistenciasData } = await supabase
         .from('asistencias')
-        .select('fecha_asistencia')
+        .select('fecha_asistencia, estado')
         .eq('alumno_id', alumno.id);
 
       // 3. Cálculo de clases restantes con motor matemático
       const { data: todosPagos } = await supabase
         .from('pagos')
-        .select('fecha_inicio, fecha_vencimiento')
+        .select('id, fecha_inicio, fecha_vencimiento')
         .eq('alumno_id', alumno.id);
 
       let clasesRestantes = 0;
@@ -232,15 +473,19 @@ export default function Alumnos() {
         );
       }
 
-      // Guardamos todas las fechas en formato YYYY-MM-DD local
-      const fechasHistorial = asistenciasData?.map(a => {
-        const d = new Date(a.fecha_asistencia);
-        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-      }) || [];
+      // Guardamos fechas en un mapa { 'YYYY-MM-DD': 'Presente' | 'Congelado' }
+      const mapaAsistencias = {};
+      if (asistenciasData) {
+        asistenciasData.forEach(a => {
+          const d = new Date(a.fecha_asistencia);
+          const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+          mapaAsistencias[dateStr] = a.estado || 'Presente';
+        });
+      }
 
       setProfileStats({
         pagosRecientes: pagosData || [],
-        asistenciasMes: fechasHistorial,
+        asistenciasMes: mapaAsistencias,
         clasesRestantes: clasesRestantes,
         latestPago: todosPagos && todosPagos.length > 0 ? [...todosPagos].sort((x, y) => new Date(y.fecha_vencimiento) - new Date(x.fecha_vencimiento))[0] : null,
         loading: false
@@ -262,8 +507,14 @@ export default function Alumnos() {
 
     const matchesBelt = beltFilter === 'Todos' || alumno.cinturon === beltFilter;
 
-    return matchesSearch && matchesBelt;
+    const estadoActual = alumno.estado || 'Activo';
+    const matchesStatus = estadoActual === statusFilter;
+
+    return matchesSearch && matchesBelt && matchesStatus;
   });
+
+  const totalPages = Math.ceil(filteredAlumnos.length / itemsPerPage);
+  const currentAlumnos = filteredAlumnos.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
     <DashboardLayout>
@@ -295,6 +546,22 @@ export default function Alumnos() {
 
         {/* Toolbar Section */}
         <div className="flex flex-col sm:flex-row items-center gap-4 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
+          
+          <div className="flex bg-slate-200 dark:bg-slate-800 p-1 rounded-xl w-full sm:w-auto shrink-0">
+            <button
+              onClick={() => setStatusFilter('Activo')}
+              className={`flex-1 sm:flex-none px-6 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 ${statusFilter === 'Activo' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-white/50 dark:hover:text-white/80'}`}
+            >
+              Activos
+            </button>
+            <button
+              onClick={() => setStatusFilter('Inactivo')}
+              className={`flex-1 sm:flex-none px-6 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 ${statusFilter === 'Inactivo' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-white/50 dark:hover:text-white/80'}`}
+            >
+              Inactivos
+            </button>
+          </div>
+
           <div className="relative w-full sm:w-96 group/search">
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
               <Search className="w-4 h-4 text-slate-400 group-focus-within/search:text-red-600 dark:text-white/40 dark:group-focus-within/search:text-red-500 transition-colors" />
@@ -326,8 +593,8 @@ export default function Alumnos() {
         </div>
 
         {/* Table Container (Double-Bezel approach) */}
-        <div className="p-1.5 bg-slate-50/80 dark:bg-white/[0.02] border border-slate-300 dark:border-white/20 border-t-[4px] border-t-red-600 dark:border-t-red-600 rounded-[2rem] shadow-[0_12px_40px_-12px_rgba(0,0,0,0.15)] dark:shadow-[0_12px_40px_-12px_rgba(255,255,255,0.05)] backdrop-blur-xl transition-all duration-700 w-full overflow-hidden">
-          <div className="bg-white dark:bg-slate-800 rounded-[calc(2rem-0.375rem)] shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] flex flex-col w-full overflow-x-auto custom-scrollbar relative min-h-[400px] transition-colors duration-500">
+        <div className="p-1.5 bg-slate-50/80 dark:bg-white/[0.02] border border-slate-300 dark:border-white/20 border-t-[4px] border-t-red-600 dark:border-t-red-600 rounded-[2rem] shadow-[0_12px_40px_-12px_rgba(0,0,0,0.15)] dark:shadow-[0_12px_40px_-12px_rgba(255,255,255,0.05)] backdrop-blur-xl transition-all duration-700 w-full overflow-hidden flex flex-col">
+          <div className="bg-white dark:bg-slate-800 rounded-t-[calc(2rem-0.375rem)] flex-1 shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] flex flex-col w-full overflow-x-auto custom-scrollbar relative min-h-[400px] transition-colors duration-500">
 
             {loading ? (
               <div className="absolute inset-0 flex items-center justify-center">
@@ -348,7 +615,7 @@ export default function Alumnos() {
                 </p>
               </div>
             ) : (
-              <table className="w-full text-left border-collapse animate-in fade-in duration-700">
+              <table className="w-full text-left border-collapse whitespace-nowrap animate-in fade-in duration-700">
                 <thead>
                   <tr className="border-b border-slate-200 dark:border-white/10 transition-colors duration-500">
                     <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-white/40">Nombre Completo</th>
@@ -361,7 +628,7 @@ export default function Alumnos() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 dark:divide-white/5 transition-all duration-300 ease-in-out">
-                  {filteredAlumnos.map((alumno) => (
+                  {currentAlumnos.map((alumno) => (
                     <tr key={alumno.id} className="hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-all duration-300 ease-in-out group">
                       <td className="px-8 py-5">
                         <div className="font-semibold text-slate-900 dark:text-white transition-colors duration-300">{alumno.nombre} {alumno.apellidos}</div>
@@ -409,27 +676,51 @@ export default function Alumnos() {
                       </td>
                       <td className="px-8 py-5 text-center">
                         <div className="flex items-center justify-center gap-2">
-                          <button
-                            onClick={() => openProfileModal(alumno)}
-                            className="p-2 text-slate-500 hover:text-slate-900 dark:text-white/60 dark:hover:text-white transition-all duration-300 ease-in-out rounded-lg hover:bg-slate-200 dark:hover:bg-white/10"
-                            title="Ver Expediente"
-                          >
-                            <Eye className="w-[18px] h-[18px] transition-transform duration-300 hover:scale-110" />
-                          </button>
-                          <button
-                            onClick={() => openEditModal(alumno)}
-                            className="p-2 text-slate-500 hover:text-slate-900 dark:text-white/60 dark:hover:text-white transition-all duration-300 ease-in-out rounded-lg hover:bg-slate-200 dark:hover:bg-white/10"
-                            title="Editar"
-                          >
-                            <Edit2 className="w-[18px] h-[18px] transition-transform duration-300 hover:scale-110" />
-                          </button>
-                          <button
-                            onClick={() => setDeleteId(alumno.id)}
-                            className="p-2 text-slate-500 hover:text-red-600 dark:text-white/60 dark:hover:text-red-500 transition-all duration-300 ease-in-out rounded-lg hover:bg-slate-200 dark:hover:bg-white/10"
-                            title="Eliminar"
-                          >
-                            <Trash2 className="w-[18px] h-[18px] transition-transform duration-300 hover:scale-110" />
-                          </button>
+                          {statusFilter === 'Activo' ? (
+                            <>
+                              <button
+                                onClick={() => openProfileModal(alumno)}
+                                className="p-2 text-slate-500 hover:text-slate-900 dark:text-white/60 dark:hover:text-white transition-all duration-300 ease-in-out rounded-lg hover:bg-slate-200 dark:hover:bg-white/10"
+                                title="Ver Expediente"
+                              >
+                                <Eye className="w-[18px] h-[18px] transition-transform duration-300 hover:scale-110" />
+                              </button>
+                              <button
+                                onClick={() => openEditModal(alumno)}
+                                className="p-2 text-slate-500 hover:text-slate-900 dark:text-white/60 dark:hover:text-white transition-all duration-300 ease-in-out rounded-lg hover:bg-slate-200 dark:hover:bg-white/10"
+                                title="Editar"
+                              >
+                                <Edit2 className="w-[18px] h-[18px] transition-transform duration-300 hover:scale-110" />
+                              </button>
+                              <button
+                                onClick={() => setDeleteId(alumno.id)}
+                                className="p-2 text-slate-500 hover:text-red-600 dark:text-white/60 dark:hover:text-red-500 transition-all duration-300 ease-in-out rounded-lg hover:bg-slate-200 dark:hover:bg-white/10"
+                                title="Desactivar"
+                              >
+                                <Trash2 className="w-[18px] h-[18px] transition-transform duration-300 hover:scale-110" />
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                onClick={() => handleRestore(alumno.id)}
+                                disabled={deleting}
+                                className="p-2 text-slate-500 hover:text-emerald-600 dark:text-white/60 dark:hover:text-emerald-500 transition-all duration-300 ease-in-out rounded-lg hover:bg-slate-200 dark:hover:bg-white/10 flex items-center gap-2"
+                                title="Restaurar Alumno"
+                              >
+                                <RefreshCcw className="w-[18px] h-[18px] transition-transform duration-300 hover:rotate-180" />
+                                <span className="text-sm font-semibold hidden sm:inline">Restaurar</span>
+                              </button>
+                              <button
+                                onClick={() => setHardDeleteId(alumno.id)}
+                                disabled={deleting}
+                                className="p-2 text-slate-500 hover:text-red-600 dark:text-white/60 dark:hover:text-red-500 transition-all duration-300 ease-in-out rounded-lg hover:bg-slate-200 dark:hover:bg-white/10 flex items-center gap-2"
+                                title="Eliminar Definitivamente"
+                              >
+                                <Trash2 className="w-[18px] h-[18px] transition-transform duration-300 hover:scale-110" />
+                              </button>
+                            </>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -438,6 +729,13 @@ export default function Alumnos() {
               </table>
             )}
           </div>
+          
+          <Pagination 
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={filteredAlumnos.length}
+            onPageChange={setCurrentPage}
+          />
         </div>
 
       </div>
@@ -582,8 +880,8 @@ export default function Alumnos() {
                 <AlertCircle className="w-8 h-8 text-red-600 dark:text-red-500" />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2 transition-all duration-300 ease-in-out">¿Eliminar alumno?</h3>
-                <p className="text-sm text-slate-500 dark:text-white/50 transition-all duration-300 ease-in-out">Esta acción no se puede deshacer. Los datos se borrarán permanentemente.</p>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2 transition-all duration-300 ease-in-out">¿Desactivar alumno?</h3>
+                <p className="text-sm text-slate-500 dark:text-white/50 transition-all duration-300 ease-in-out">El alumno pasará a Inactivo y se ocultará de los registros diarios. Podrás restaurarlo más adelante.</p>
               </div>
               <div className="flex items-center gap-3 mt-2">
                 <button
@@ -599,7 +897,44 @@ export default function Alumnos() {
                   className="flex-1 py-3 px-4 rounded-xl font-medium text-white bg-red-600 hover:bg-red-700 transition-all duration-300 ease-in-out disabled:opacity-70 flex items-center justify-center gap-2"
                 >
                   {deleting && <Loader2 className="w-4 h-4 animate-spin" />}
-                  <span>Eliminar</span>
+                  <span>Desactivar</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Modal - Confirmar Eliminar Definitivamente */}
+      {hardDeleteId && createPortal(
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/40 dark:bg-slate-800/60 backdrop-blur-md transition-all duration-300 ease-in-out" onClick={() => !deleting && setHardDeleteId(null)} />
+
+          <div className="relative w-full max-w-sm p-1.5 bg-slate-50/80 dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 rounded-[2rem] shadow-xl dark:shadow-2xl animate-in fade-in zoom-in-95 duration-300 ease-in-out">
+            <div className="p-8 bg-white dark:bg-slate-800 rounded-[calc(2rem-0.375rem)] shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] flex flex-col gap-6 text-center transition-all duration-300 ease-in-out">
+              <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center mx-auto">
+                <AlertCircle className="w-8 h-8 text-red-600 dark:text-red-500" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2 transition-all duration-300 ease-in-out">¿Eliminar definitivamente?</h3>
+                <p className="text-sm text-slate-500 dark:text-white/50 transition-all duration-300 ease-in-out">Esta acción destruirá los datos del alumno de forma permanente en la base de datos y no se puede deshacer.</p>
+              </div>
+              <div className="flex items-center gap-3 mt-2">
+                <button
+                  onClick={() => setHardDeleteId(null)}
+                  disabled={deleting}
+                  className="flex-1 py-3 px-4 rounded-xl font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 dark:text-white dark:bg-white/5 dark:hover:bg-white/10 transition-all duration-300 ease-in-out disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleHardDelete}
+                  disabled={deleting}
+                  className="flex-1 py-3 px-4 rounded-xl font-medium text-white bg-red-600 hover:bg-red-700 transition-all duration-300 ease-in-out disabled:opacity-70 flex items-center justify-center gap-2"
+                >
+                  {deleting && <Loader2 className="w-4 h-4 animate-spin" />}
+                  <span>Borrar</span>
                 </button>
               </div>
             </div>
@@ -640,12 +975,34 @@ export default function Alumnos() {
                     )}
                   </div>
                 </div>
-                <button
-                  onClick={() => setIsProfileModalOpen(false)}
-                  className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-900 dark:bg-white/5 dark:text-white/70 flex items-center justify-center dark:hover:bg-white/10 dark:hover:text-white transition-all duration-300 ease-in-out"
-                >
-                  <X className="w-4 h-4 transition-transform duration-300 hover:rotate-90" />
-                </button>
+                <div className="flex items-center gap-3">
+                  {!profileStats.loading && profileStats.latestPago && (
+                    <>
+                      <button
+                        onClick={() => setIsUnfreezeModalOpen(true)}
+                        className="group relative flex items-center justify-between bg-slate-50 dark:bg-white/5 text-slate-600 dark:text-white/70 hover:bg-slate-100 dark:hover:bg-white/10 px-4 py-2 rounded-full font-medium transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98] border border-slate-200 dark:border-white/10 shadow-sm"
+                        title="Descongelar Membresía (Corregir Días)"
+                      >
+                        <Sun className="w-4 h-4 mr-2 text-amber-500 group-hover:rotate-180 transition-transform duration-700 ease-in-out" />
+                        <span className="text-sm">Descongelar</span>
+                      </button>
+                      <button
+                        onClick={() => setIsFreezeModalOpen(true)}
+                        className="group relative flex items-center justify-between bg-slate-50 dark:bg-white/5 text-slate-600 dark:text-white/70 hover:bg-slate-100 dark:hover:bg-white/10 px-4 py-2 rounded-full font-medium transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98] border border-slate-200 dark:border-white/10 shadow-sm"
+                        title="Congelar Membresía"
+                      >
+                        <Snowflake className="w-4 h-4 mr-2 text-sky-500 group-hover:rotate-180 transition-transform duration-700 ease-in-out" />
+                        <span className="text-sm">Congelar</span>
+                      </button>
+                    </>
+                  )}
+                  <button
+                    onClick={() => setIsProfileModalOpen(false)}
+                    className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-900 dark:bg-white/5 dark:text-white/70 flex items-center justify-center dark:hover:bg-white/10 dark:hover:text-white transition-all duration-300 ease-in-out"
+                  >
+                    <X className="w-4 h-4 transition-transform duration-300 hover:rotate-90" />
+                  </button>
+                </div>
               </div>
 
               {/* Contenido del Perfil */}
@@ -757,7 +1114,7 @@ export default function Alumnos() {
                           const isWithinRange = inicioTime && finTime && cellTime >= inicioTime && cellTime <= finTime;
                           const shouldAttend = isWithinRange && diasTurno.includes(nombreDia) && !FERIADOS_PERU.includes(dateKey);
 
-                          const attended = profileStats.asistenciasMes.includes(dateStr);
+                          const estadoAsistencia = profileStats.asistenciasMes[dateStr];
                           const isPastStrict = cellTime < todayTime; // Strictly before today
                           const isFutureOrToday = cellTime >= todayTime;
 
@@ -765,13 +1122,18 @@ export default function Alumnos() {
                           let borderColor = "border-transparent";
                           let textColor = "text-slate-400 dark:text-white/40";
 
-                          if (attended) {
-                            // VERDE
+                          if (estadoAsistencia === 'Congelado') {
+                            // GRIS MINIMALISTA (Congelado / Justificado)
+                            bgColor = "bg-slate-100 dark:bg-white/5";
+                            borderColor = "border-slate-200 dark:border-white/10";
+                            textColor = "text-sky-500";
+                          } else if (estadoAsistencia) {
+                            // VERDE (Presente)
                             bgColor = "bg-emerald-500";
                             borderColor = "border-emerald-600";
                             textColor = "text-white font-bold";
                           } else if (shouldAttend && isPastStrict) {
-                            // ROJO
+                            // ROJO (Faltó)
                             bgColor = "bg-red-500";
                             borderColor = "border-red-600";
                             textColor = "text-white font-bold";
@@ -791,9 +1153,11 @@ export default function Alumnos() {
                             <div
                               key={`day-${d}`}
                               className={`w-8 h-8 sm:w-9 sm:h-9 mx-auto flex items-center justify-center rounded-lg border transition-colors duration-300 ${bgColor} ${borderColor}`}
-                              title={dateStr}
+                              title={estadoAsistencia === 'Congelado' ? `${dateStr} - Congelado` : dateStr}
                             >
-                              <span className={`text-xs sm:text-sm ${textColor}`}>{d}</span>
+                              <span className={`text-xs sm:text-sm ${textColor}`}>
+                                {estadoAsistencia === 'Congelado' ? <Snowflake className="w-4 h-4" /> : d}
+                              </span>
                             </div>
                           );
                         }
@@ -802,7 +1166,7 @@ export default function Alumnos() {
                       })()}
                     </div>
 
-                    <div className="flex items-center gap-6 mt-6 justify-center">
+                    <div className="flex flex-wrap items-center gap-4 sm:gap-6 mt-6 justify-center">
                       <div className="flex items-center gap-2">
                         <div className="w-3 h-3 rounded-full bg-emerald-500" />
                         <span className="text-xs text-slate-500 dark:text-white/40 font-medium">Asistió</span>
@@ -812,8 +1176,14 @@ export default function Alumnos() {
                         <span className="text-xs text-slate-500 dark:text-white/40 font-medium">Faltó</span>
                       </div>
                       <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full bg-slate-100 dark:bg-white/10 border border-slate-200 dark:border-white/20 flex items-center justify-center">
+                          <Snowflake className="w-2 h-2 text-sky-500" />
+                        </div>
+                        <span className="text-xs text-slate-500 dark:text-white/40 font-medium">Congelado</span>
+                      </div>
+                      <div className="flex items-center gap-2">
                         <div className="w-3 h-3 rounded-full bg-gray-300 dark:bg-neutral-700" />
-                        <span className="text-xs text-slate-500 dark:text-white/40 font-medium">Pendiente / Libre</span>
+                        <span className="text-xs text-slate-500 dark:text-white/40 font-medium">Pendiente</span>
                       </div>
                     </div>
                   </div>
@@ -821,6 +1191,174 @@ export default function Alumnos() {
 
               </div>
 
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Modal - Descongelar Membresía (Undo) */}
+      {isUnfreezeModalOpen && createPortal(
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/60 dark:bg-slate-900/80 backdrop-blur-sm transition-all duration-300" onClick={() => !unfreezing && setIsUnfreezeModalOpen(false)} />
+
+          <div className="relative w-full max-w-md bg-white dark:bg-slate-800 rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-300">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center">
+                    <Sun className="w-5 h-5 text-amber-500" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-white">Descongelar Membresía</h3>
+                    <p className="text-sm text-slate-500 dark:text-white/60">Corregir o restaurar días</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => !unfreezing && setIsUnfreezeModalOpen(false)}
+                  className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-white/5 dark:text-white/70 flex items-center justify-center dark:hover:bg-white/10"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <form onSubmit={handleUnfreezeSubmit} className="flex flex-col gap-5">
+                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 border-l-4 border-l-amber-500 dark:bg-slate-900/50 dark:border-white/10 dark:border-l-amber-500 mb-2">
+                  <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                    Ingresa el rango de fechas de los días que <strong>sobraron o te equivocaste</strong>. El sistema buscará los días congelados en ese rango, los eliminará y ajustará la vigencia automáticamente.
+                  </p>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-semibold text-slate-700 dark:text-white/80">
+                    Fecha Inicio (Restaurar)
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    value={unfreezeData.fechaInicio}
+                    onChange={(e) => setUnfreezeData({ ...unfreezeData, fechaInicio: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-slate-500/20 focus:border-slate-500 dark:bg-slate-900/50 dark:border-white/10 dark:text-white transition-all"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-semibold text-slate-700 dark:text-white/80">
+                    Fecha Fin (Restaurar)
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    value={unfreezeData.fechaFin}
+                    onChange={(e) => setUnfreezeData({ ...unfreezeData, fechaFin: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-slate-500/20 focus:border-slate-500 dark:bg-slate-900/50 dark:border-white/10 dark:text-white transition-all"
+                  />
+                </div>
+
+                <div className="flex items-center gap-3 mt-4">
+                  <button
+                    type="button"
+                    onClick={() => setIsUnfreezeModalOpen(false)}
+                    disabled={unfreezing}
+                    className="flex-1 px-6 py-3 rounded-xl font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:text-white/70 dark:hover:bg-white/10 transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={unfreezing}
+                    className="flex-1 px-6 py-3 rounded-xl font-bold text-white bg-slate-800 hover:bg-slate-900 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200 transition-colors flex items-center justify-center gap-2 shadow-sm"
+                  >
+                    {unfreezing && <Loader2 className="w-4 h-4 animate-spin" />}
+                    Confirmar
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Modal - Congelar Membresía */}
+      {isFreezeModalOpen && createPortal(
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/60 dark:bg-slate-900/80 backdrop-blur-sm transition-all duration-300" onClick={() => !freezing && setIsFreezeModalOpen(false)} />
+
+          <div className="relative w-full max-w-md bg-white dark:bg-slate-800 rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-300">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center">
+                    <Snowflake className="w-5 h-5 text-sky-500" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-white">Congelar Membresía</h3>
+                    <p className="text-sm text-slate-500 dark:text-white/60">Por lesión o ausencia justificada</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => !freezing && setIsFreezeModalOpen(false)}
+                  className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-white/5 dark:text-white/70 flex items-center justify-center dark:hover:bg-white/10"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <form onSubmit={handleFreezeSubmit} className="flex flex-col gap-5">
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-semibold text-slate-700 dark:text-white/80">
+                    Fecha Inicio (Lesión/Ausencia)
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    value={freezeData.fechaInicio}
+                    onChange={(e) => setFreezeData({ ...freezeData, fechaInicio: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-slate-500/20 focus:border-slate-500 dark:bg-slate-900/50 dark:border-white/10 dark:text-white transition-all"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-semibold text-slate-700 dark:text-white/80">
+                    Fecha Fin (Lesión/Ausencia)
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    value={freezeData.fechaFin}
+                    onChange={(e) => setFreezeData({ ...freezeData, fechaFin: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-slate-500/20 focus:border-slate-500 dark:bg-slate-900/50 dark:border-white/10 dark:text-white transition-all"
+                  />
+                </div>
+
+                {freezeData.fechaInicio && freezeData.fechaFin && new Date(freezeData.fechaFin) >= new Date(freezeData.fechaInicio) && (
+                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 border-l-4 border-l-sky-500 dark:bg-slate-900/50 dark:border-white/10 dark:border-l-sky-500 mt-2">
+                    <p className="text-sm text-slate-600 dark:text-slate-300">
+                      Se extenderá la vigencia actual <strong>{Math.ceil(Math.abs(new Date(`${freezeData.fechaFin}T00:00:00`) - new Date(`${freezeData.fechaInicio}T00:00:00`)) / (1000 * 60 * 60 * 24)) + 1} días</strong> hacia el futuro y los días seleccionados se marcarán como "Congelados" en el historial.
+                    </p>
+                  </div>
+                )}
+
+                <div className="flex items-center gap-3 mt-4">
+                  <button
+                    type="button"
+                    onClick={() => setIsFreezeModalOpen(false)}
+                    disabled={freezing}
+                    className="flex-1 px-6 py-3 rounded-xl font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:text-white/70 dark:hover:bg-white/10 transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={freezing}
+                    className="flex-1 px-6 py-3 rounded-xl font-bold text-white bg-slate-800 hover:bg-slate-900 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200 transition-colors flex items-center justify-center gap-2 shadow-sm"
+                  >
+                    {freezing && <Loader2 className="w-4 h-4 animate-spin" />}
+                    Confirmar
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         </div>,

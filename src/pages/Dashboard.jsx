@@ -23,7 +23,7 @@ export default function Dashboard() {
       setLoading(true);
 
       const [alumnosRes, pagosRes] = await Promise.all([
-        supabase.from('alumnos').select('id, nombre, apellidos'),
+        supabase.from('alumnos').select('id, nombre, apellidos, estado'),
         supabase.from('pagos').select('id, alumno_id, monto, fecha_inicio, fecha_vencimiento')
       ]);
 
@@ -49,11 +49,12 @@ export default function Dashboard() {
       });
       setIngresosMes(sumaIngresos);
 
-      // 2. Alumnos Registrados
-      setTotalAlumnos(alumnosData.length);
+      // 2. Alumnos Registrados (solo Activos)
+      const alumnosActivos = alumnosData.filter(a => a.estado !== 'Inactivo');
+      setTotalAlumnos(alumnosActivos.length);
 
-      // Agrupar el último pago de cada alumno
-      const alumnosConUltimoPago = alumnosData.map(a => {
+      // Agrupar el último pago de cada alumno activo
+      const alumnosConUltimoPago = alumnosActivos.map(a => {
         const misPagos = pagosData.filter(p => p.alumno_id === a.id);
         let latestPago = null;
         if (misPagos.length > 0) {
@@ -138,10 +139,10 @@ export default function Dashboard() {
         ) : (
           <>
             {/* KPIs Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
               {/* Tarjeta 1: Ingresos */}
-              <div className="p-1.5 bg-slate-50/80 dark:bg-white/[0.02] border border-slate-300 dark:border-white/20 rounded-[2rem] shadow-[0_12px_40px_-12px_rgba(0,0,0,0.15)] dark:shadow-[0_12px_40px_-12px_rgba(255,255,255,0.05)] backdrop-blur-xl group transition-colors duration-700">
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 p-1.5 bg-slate-50/80 dark:bg-white/[0.02] border border-slate-300 dark:border-white/20 rounded-[2rem] shadow-[0_12px_40px_-12px_rgba(0,0,0,0.15)] dark:shadow-[0_12px_40px_-12px_rgba(255,255,255,0.05)] backdrop-blur-xl group hover:-translate-y-1 hover:shadow-[0_20px_40px_-12px_rgba(0,0,0,0.2)] hover:dark:shadow-[0_20px_40px_-12px_rgba(255,255,255,0.1)] transition-all ease-[cubic-bezier(0.32,0.72,0,1)]">
                 <div className="p-6 bg-white dark:bg-slate-800 rounded-[calc(2rem-0.375rem)] shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] flex flex-col gap-4 h-full relative overflow-hidden transition-colors duration-500">
                   <div className="flex justify-between items-start">
                     <h3 className="text-slate-500 dark:text-white/50 text-xs font-semibold tracking-[0.15em] uppercase">Ingresos del Mes</h3>
@@ -157,7 +158,7 @@ export default function Dashboard() {
               </div>
 
               {/* Tarjeta 2: Alumnos Registrados */}
-              <div className="p-1.5 bg-slate-50/80 dark:bg-white/[0.02] border border-slate-300 dark:border-white/20 rounded-[2rem] shadow-[0_12px_40px_-12px_rgba(0,0,0,0.15)] dark:shadow-[0_12px_40px_-12px_rgba(255,255,255,0.05)] backdrop-blur-xl group transition-colors duration-700">
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100 p-1.5 bg-slate-50/80 dark:bg-white/[0.02] border border-slate-300 dark:border-white/20 rounded-[2rem] shadow-[0_12px_40px_-12px_rgba(0,0,0,0.15)] dark:shadow-[0_12px_40px_-12px_rgba(255,255,255,0.05)] backdrop-blur-xl group hover:-translate-y-1 hover:shadow-[0_20px_40px_-12px_rgba(0,0,0,0.2)] hover:dark:shadow-[0_20px_40px_-12px_rgba(255,255,255,0.1)] transition-all ease-[cubic-bezier(0.32,0.72,0,1)] fill-mode-both">
                 <div className="p-6 bg-white dark:bg-slate-800 rounded-[calc(2rem-0.375rem)] shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] flex flex-col gap-4 h-full relative overflow-hidden transition-colors duration-500">
                   <div className="flex justify-between items-start">
                     <h3 className="text-slate-500 dark:text-white/50 text-xs font-semibold tracking-[0.15em] uppercase">Alumnos Registrados</h3>
@@ -172,7 +173,7 @@ export default function Dashboard() {
               </div>
 
               {/* Tarjeta 3: Mensualidades Vencidas */}
-              <div className="p-1.5 bg-slate-50/80 dark:bg-white/[0.02] border border-slate-300 dark:border-white/20 rounded-[2rem] shadow-[0_12px_40px_-12px_rgba(0,0,0,0.15)] dark:shadow-[0_12px_40px_-12px_rgba(255,255,255,0.05)] backdrop-blur-xl group transition-colors duration-700">
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200 p-1.5 bg-slate-50/80 dark:bg-white/[0.02] border border-slate-300 dark:border-white/20 rounded-[2rem] shadow-[0_12px_40px_-12px_rgba(0,0,0,0.15)] dark:shadow-[0_12px_40px_-12px_rgba(255,255,255,0.05)] backdrop-blur-xl group hover:-translate-y-1 hover:shadow-[0_20px_40px_-12px_rgba(0,0,0,0.2)] hover:dark:shadow-[0_20px_40px_-12px_rgba(255,255,255,0.1)] transition-all ease-[cubic-bezier(0.32,0.72,0,1)] fill-mode-both">
                 <div className="p-6 bg-white dark:bg-slate-800 rounded-[calc(2rem-0.375rem)] shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] flex flex-col gap-4 h-full relative overflow-hidden transition-colors duration-500">
                   <div className="flex justify-between items-start">
                     <h3 className="text-slate-500 dark:text-white/50 text-xs font-semibold tracking-[0.15em] uppercase">Mensualidades Vencidas</h3>
@@ -189,7 +190,7 @@ export default function Dashboard() {
             </div>
 
             {/* SECCIÓN ALERTAS */}
-            <div className="mt-4 flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200">
+            <div className="mt-4 flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-700 delay-300 fill-mode-both">
               <div className="flex items-center gap-2 px-2">
                 <h2 className="text-lg font-bold text-slate-900 dark:text-white">Alertas de Vencimiento</h2>
                 <span className="text-sm text-slate-500 dark:text-white/50">(-15 días a +5 días)</span>
@@ -207,7 +208,7 @@ export default function Dashboard() {
                       <p className="text-slate-500 dark:text-white/50 mt-1">No hay mensualidades por vencer pronto ni vencimientos recientes.</p>
                     </div>
                   ) : (
-                    <table className="w-full text-left border-collapse">
+                    <table className="w-full text-left border-collapse whitespace-nowrap">
                       <thead>
                         <tr className="border-b border-slate-200 dark:border-white/10 transition-colors duration-500 bg-slate-50/50 dark:bg-white/[0.02]">
                           <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-white/40">Alumno</th>

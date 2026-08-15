@@ -41,7 +41,7 @@ export default function DashboardLayout({ children }) {
     <div className="flex h-[100dvh] w-full bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white overflow-hidden font-sans relative transition-colors duration-500">
       {/* Sidebar */}
       <aside
-        className={`relative z-20 flex flex-col border-r border-slate-200 dark:border-white/10 bg-white/50 dark:bg-white/[0.02] backdrop-blur-3xl transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] ${isCollapsed ? 'w-20' : 'w-72'
+        className={`relative z-20 flex flex-col border-r border-slate-200 dark:border-white/10 bg-white dark:bg-[#0a0a0a] transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] ${isCollapsed ? 'w-20' : 'w-72'
           }`}
       >
         {/* Header & Toggle */}
@@ -75,9 +75,9 @@ export default function DashboardLayout({ children }) {
                 key={item.name}
                 onClick={() => navigate(item.path)}
                 title={isCollapsed ? item.name : ''}
-                className={`group relative flex items-center h-12 rounded-xl transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] overflow-hidden ${isActive
+                className={`group relative flex items-center h-12 rounded-xl transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] overflow-hidden active:scale-95 ${isActive
                   ? 'bg-slate-100 text-slate-900 dark:bg-white/10 dark:text-white'
-                  : 'text-slate-500 hover:bg-slate-100/50 hover:text-slate-900 dark:text-white/50 dark:hover:bg-white/5 dark:hover:text-white'
+                  : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 dark:text-white/50 dark:hover:bg-white/5 dark:hover:text-white'
                   } ${isCollapsed ? 'justify-center w-14 mx-auto' : 'px-4 w-full'}`}
               >
                 {isActive && !isCollapsed && (
@@ -103,7 +103,7 @@ export default function DashboardLayout({ children }) {
           <button
             onClick={toggleTheme}
             title={isCollapsed ? (isDark ? 'Modo Claro' : 'Modo Oscuro') : ''}
-            className={`group relative flex items-center h-12 rounded-xl transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] text-slate-500 hover:bg-slate-100/50 hover:text-slate-900 dark:text-white/50 dark:hover:bg-white/5 dark:hover:text-white overflow-hidden ${isCollapsed ? 'justify-center w-14 mx-auto' : 'px-4 w-full'
+            className={`group relative flex items-center h-12 rounded-xl transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] text-slate-500 hover:bg-slate-100/50 hover:text-slate-900 dark:text-white/50 dark:hover:bg-white/5 dark:hover:text-white overflow-hidden active:scale-95 ${isCollapsed ? 'justify-center w-14 mx-auto' : 'px-4 w-full'
               }`}
           >
             <div className="w-5 h-5 shrink-0 flex items-center justify-center relative">
@@ -123,10 +123,10 @@ export default function DashboardLayout({ children }) {
           <button
             onClick={handleLogout}
             title={isCollapsed ? 'Cerrar Sesión' : ''}
-            className={`group relative flex items-center h-12 rounded-xl transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] text-slate-500 hover:bg-slate-100/50 hover:text-red-600 dark:text-white/50 dark:hover:bg-white/5 dark:hover:text-red-500 overflow-hidden ${isCollapsed ? 'justify-center w-14 mx-auto' : 'px-4 w-full'
+            className={`group relative flex items-center h-12 rounded-xl transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] text-slate-500 hover:bg-slate-100/50 hover:text-red-600 dark:text-white/50 dark:hover:bg-white/5 dark:hover:text-red-500 overflow-hidden active:scale-95 ${isCollapsed ? 'justify-center w-14 mx-auto' : 'px-4 w-full'
               }`}
           >
-            <LogOut className="w-5 h-5 shrink-0 group-hover:-translate-x-1 transition-transform duration-500" />
+            <LogOut className="w-5 h-5 shrink-0 transition-all duration-500 group-hover:-translate-x-1" />
             {!isCollapsed && (
               <span className="ml-4 font-medium whitespace-nowrap text-sm tracking-wide">
                 Cerrar Sesión
