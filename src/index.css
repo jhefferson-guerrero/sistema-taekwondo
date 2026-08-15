@@ -1,10 +1,13 @@
 @import "tailwindcss";
+@plugin "tailwindcss-animate";
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
+  --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+
   --color-slate-50: #F5F2ED;
-  --color-slate-100: #EAE6DB;
-  --color-slate-200: #DCD6C7;
+  --color-slate-100: #f5f2ed;
+  --color-slate-200: #EBE7DD;
   --color-slate-300: #C2BBA8;
   --color-slate-400: #A8A196;
   --color-slate-500: #7A7468;
@@ -12,10 +15,10 @@
   --color-slate-700: #3D382F;
   --color-slate-800: #1C1C1C;
   --color-slate-900: #0B0B0B;
-  
-  --color-white: #F5F2ED;
+
+  --color-white: #FAF9F7;
   --color-black: #0B0B0B;
-  
+
   --color-red-400: #A31E2D;
   --color-red-500: #8B0D1A;
   --color-red-600: #8B0D1A;
@@ -28,18 +31,23 @@
 /* Ocultar barra horizontal y estilizar vertical */
 .custom-scrollbar::-webkit-scrollbar {
   width: 3px;
-  height: 0px; /* Force hide horizontal scrollbar */
+  height: 0px;
+  /* Force hide horizontal scrollbar */
 }
+
 .custom-scrollbar::-webkit-scrollbar-track {
   background: transparent;
 }
+
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background-color: rgba(255, 255, 255, 0.1);
   border-radius: 10px;
 }
+
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background-color: rgba(255, 255, 255, 0.2);
 }
+
 .custom-scrollbar {
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.1) transparent;

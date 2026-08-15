@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import DashboardLayout from '../components/DashboardLayout';
 import { supabase } from '../services/supabaseClient';
 import { Plus, Minus, CreditCard, X, Loader2, Calendar, Edit2, Trash2, AlertCircle, Search, Filter } from 'lucide-react';
+import Pagination from '../components/Pagination';
 
 const getTodayStr = () => {
   const d = new Date();
@@ -40,9 +41,17 @@ export default function Pagos() {
   const [alumnoSearchTerm, setAlumnoSearchTerm] = useState('');
   const [isAlumnoDropdownOpen, setIsAlumnoDropdownOpen] = useState(false);
 
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
+
   useEffect(() => {
     fetchData();
   }, []);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, metodoFilter]);
 
   const fetchData = async () => {
     try {
@@ -63,11 +72,13 @@ export default function Pagos() {
 
       const { data: alumnosData, error: alumnosError } = await supabase
         .from('alumnos')
-        .select('id, nombre, apellidos')
+        .select('id, nombre, apellidos, estado')
         .order('nombre', { ascending: true });
 
       if (alumnosError) throw alumnosError;
-      setAlumnos(alumnosData || []);
+      
+      const alumnosActivos = (alumnosData || []).filter(a => a.estado !== 'Inactivo');
+      setAlumnos(alumnosActivos);
 
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -201,6 +212,9 @@ export default function Pagos() {
     return full.includes(alumnoSearchTerm.toLowerCase());
   });
 
+  const totalPages = Math.ceil(filteredPagos.length / itemsPerPage);
+  const currentPagos = filteredPagos.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
   return (
     <DashboardLayout>
       <div className="flex flex-col gap-8">
@@ -262,8 +276,8 @@ export default function Pagos() {
         </div>
 
         {/* Table Container */}
-        <div className="p-1.5 bg-slate-50/80 dark:bg-white/[0.02] border border-slate-300 dark:border-white/20 border-t-[4px] border-t-red-600 dark:border-t-red-600 rounded-[2rem] shadow-[0_12px_40px_-12px_rgba(0,0,0,0.15)] dark:shadow-[0_12px_40px_-12px_rgba(255,255,255,0.05)] backdrop-blur-xl transition-all duration-700 w-full overflow-hidden">
-          <div className="bg-white dark:bg-slate-800 rounded-[calc(2rem-0.375rem)] shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] flex flex-col w-full overflow-x-auto custom-scrollbar relative min-h-[400px] transition-colors duration-500">
+        <div className="p-1.5 bg-slate-50/80 dark:bg-white/[0.02] border border-slate-300 dark:border-white/20 border-t-[4px] border-t-red-600 dark:border-t-red-600 rounded-[2rem] shadow-[0_12px_40px_-12px_rgba(0,0,0,0.15)] dark:shadow-[0_12px_40px_-12px_rgba(255,255,255,0.05)] backdrop-blur-xl transition-all duration-700 w-full overflow-hidden flex flex-col">
+          <div className="bg-white dark:bg-slate-800 rounded-t-[calc(2rem-0.375rem)] flex-1 shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] flex flex-col w-full overflow-x-auto custom-scrollbar relative min-h-[400px] transition-colors duration-500">
 
             {loading ? (
               <div className="absolute inset-0 flex items-center justify-center">
@@ -284,7 +298,7 @@ export default function Pagos() {
                 </p>
               </div>
             ) : (
-              <table className="w-full text-left border-collapse animate-in fade-in duration-700">
+              <table className="w-full text-left border-collapse whitespace-nowrap animate-in fade-in duration-700">
                 <thead>
                   <tr className="border-b border-slate-200 dark:border-white/10 transition-colors duration-500">
                     <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-white/40">Alumno</th>
@@ -297,7 +311,7 @@ export default function Pagos() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 dark:divide-white/5 transition-all duration-300 ease-in-out">
-                  {filteredPagos.map((pago) => (
+                  {currentPagos.map((pago) => (
                     <tr key={pago.id} className="hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-all duration-300 ease-in-out group">
                       <td className="px-8 py-5">
                         <div className="font-semibold text-slate-900 dark:text-white transition-colors duration-300">{pago.alumnos?.nombre} {pago.alumnos?.apellidos}</div>
@@ -359,6 +373,13 @@ export default function Pagos() {
               </table>
             )}
           </div>
+          
+          <Pagination 
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={filteredPagos.length}
+            onPageChange={setCurrentPage}
+          />
         </div>
 
       </div>

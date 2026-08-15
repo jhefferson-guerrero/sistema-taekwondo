@@ -56,7 +56,7 @@ export default function Login() {
         <div className="w-full">
 
           {/* Outer Shell */}
-          <div className="p-2 bg-white/50 border border-slate-200 dark:bg-white/[0.02] dark:border-white/10 rounded-[2rem] shadow-xl dark:shadow-2xl backdrop-blur-xl animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-150 ease-[cubic-bezier(0.32,0.72,0,1)] fill-mode-both transition-colors">
+          <div className="p-2 bg-white/50 border border-slate-200 border-t-[4px] border-t-red-600 dark:bg-white/[0.02] dark:border-white/10 dark:border-t-red-600 rounded-[2rem] shadow-xl dark:shadow-2xl backdrop-blur-xl animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-150 ease-[cubic-bezier(0.32,0.72,0,1)] fill-mode-both transition-colors">
 
             {/* Inner Core */}
             <div className="p-8 sm:p-10 bg-white dark:bg-[#0a0a0a] rounded-[calc(2rem-0.5rem)] shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] flex flex-col gap-8 relative overflow-hidden transition-colors duration-500">
