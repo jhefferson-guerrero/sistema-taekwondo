@@ -52,3 +52,32 @@
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
 }
+
+/* ===== PERSONALIZACIÓN DE AUTOCOMPLETADO (Chrome/Edge) ===== */
+/* Evita el fondo celeste/amarillo que ponen los navegadores por defecto */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active {
+    transition: background-color 9999s ease-in-out 0s, color 9999s ease-in-out 0s;
+}
+
+.dark input:-webkit-autofill,
+.dark input:-webkit-autofill:hover, 
+.dark input:-webkit-autofill:focus, 
+.dark input:-webkit-autofill:active {
+    transition: background-color 9999s ease-in-out 0s;
+    -webkit-text-fill-color: var(--color-white) !important;
+}
+
+/* ===== PERSONALIZACIÓN DE SELECCIÓN DE TEXTO ===== */
+/* Cambia el color azul por defecto al sombrear/seleccionar texto */
+::selection {
+  background-color: #8B0D1A33; /* Rojo Fertex al 20% */
+  color: inherit; /* Mantiene el color de la letra original */
+}
+
+.dark ::selection {
+  background-color: #A31E2D4D; /* Rojo Fertex claro al 30% */
+  color: inherit;
+}
