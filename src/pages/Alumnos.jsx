@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import DashboardLayout from '../components/DashboardLayout';
 import { supabase } from '../services/supabaseClient';
 import { Plus, Users, X, Loader2, Calendar, Edit2, Trash2, AlertCircle, Search, Filter, Eye, ChevronLeft, ChevronRight, Snowflake, Sun, RefreshCcw } from 'lucide-react';
 import { calcularClasesRestantes, FERIADOS_PERU } from '../utils/membresiaUtils';
@@ -517,7 +516,7 @@ export default function Alumnos() {
   const currentAlumnos = filteredAlumnos.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
-    <DashboardLayout>
+    <>
       <div className="flex flex-col gap-8">
 
         {/* Header Section */}
@@ -550,13 +549,13 @@ export default function Alumnos() {
           <div className="flex bg-slate-200 dark:bg-slate-800 p-1 rounded-xl w-full sm:w-auto shrink-0">
             <button
               onClick={() => setStatusFilter('Activo')}
-              className={`flex-1 sm:flex-none px-6 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 ${statusFilter === 'Activo' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-white/50 dark:hover:text-white/80'}`}
+              className={`flex-1 sm:flex-none px-6 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 ${statusFilter === 'Activo' ? 'bg-white dark:bg-white/10 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-white/50 dark:hover:text-white/80'}`}
             >
               Activos
             </button>
             <button
               onClick={() => setStatusFilter('Inactivo')}
-              className={`flex-1 sm:flex-none px-6 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 ${statusFilter === 'Inactivo' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-white/50 dark:hover:text-white/80'}`}
+              className={`flex-1 sm:flex-none px-6 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 ${statusFilter === 'Inactivo' ? 'bg-white dark:bg-white/10 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-white/50 dark:hover:text-white/80'}`}
             >
               Inactivos
             </button>
@@ -601,7 +600,7 @@ export default function Alumnos() {
                 <Loader2 className="w-8 h-8 text-red-600 animate-spin" />
               </div>
             ) : filteredAlumnos.length === 0 ? (
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8 animate-in fade-in zoom-in-95 duration-700">
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8">
                 <div className="w-20 h-20 rounded-full bg-slate-100 border border-slate-200 dark:bg-white/5 dark:border-white/10 flex items-center justify-center mb-6 transition-colors duration-500">
                   <Users className="w-8 h-8 text-slate-400 dark:text-white/30" strokeWidth={1.5} />
                 </div>
@@ -615,7 +614,7 @@ export default function Alumnos() {
                 </p>
               </div>
             ) : (
-              <table className="w-full text-left border-collapse whitespace-nowrap animate-in fade-in duration-700">
+              <table className="w-full text-left border-collapse whitespace-nowrap">
                 <thead>
                   <tr className="border-b border-slate-200 dark:border-white/10 transition-colors duration-500">
                     <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-white/40">Nombre Completo</th>
@@ -1364,6 +1363,6 @@ export default function Alumnos() {
         </div>,
         document.body
       )}
-    </DashboardLayout>
+    </>
   );
 }

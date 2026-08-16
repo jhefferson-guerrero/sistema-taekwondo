@@ -49,7 +49,7 @@ export default function DashboardLayout({ children }) {
           }`}>
           {!isCollapsed && (
             <div className="flex items-center gap-3 animate-in fade-in zoom-in-95 duration-500">
-              <div className="w-8 h-8 rounded-full bg-red-600 flex items-center justify-center shrink-0" />
+              <img src="/logo-fertex.webp" alt="Fertex Logo" className="w-8 h-8 rounded-full object-cover shrink-0 border border-slate-200 dark:border-white/10" />
               <span className="font-bold tracking-tight truncate">Fertex Admin</span>
             </div>
           )}
@@ -103,7 +103,7 @@ export default function DashboardLayout({ children }) {
           <button
             onClick={toggleTheme}
             title={isCollapsed ? (isDark ? 'Modo Claro' : 'Modo Oscuro') : ''}
-            className={`group relative flex items-center h-12 rounded-xl transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] text-slate-500 hover:bg-slate-100/50 hover:text-slate-900 dark:text-white/50 dark:hover:bg-white/5 dark:hover:text-white overflow-hidden active:scale-95 ${isCollapsed ? 'justify-center w-14 mx-auto' : 'px-4 w-full'
+            className={`group relative flex items-center h-12 rounded-xl transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] text-slate-500 hover:bg-slate-200/50 hover:text-slate-900 dark:text-white/50 dark:hover:bg-white/5 dark:hover:text-white overflow-hidden active:scale-95 ${isCollapsed ? 'justify-center w-14 mx-auto' : 'px-4 w-full'
               }`}
           >
             <div className="w-5 h-5 shrink-0 flex items-center justify-center relative">
@@ -123,7 +123,7 @@ export default function DashboardLayout({ children }) {
           <button
             onClick={handleLogout}
             title={isCollapsed ? 'Cerrar Sesión' : ''}
-            className={`group relative flex items-center h-12 rounded-xl transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] text-slate-500 hover:bg-slate-100/50 hover:text-red-600 dark:text-white/50 dark:hover:bg-white/5 dark:hover:text-red-500 overflow-hidden active:scale-95 ${isCollapsed ? 'justify-center w-14 mx-auto' : 'px-4 w-full'
+            className={`group relative flex items-center h-12 rounded-xl transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] text-slate-500 hover:bg-slate-200/50 hover:text-red-600 dark:text-white/50 dark:hover:bg-white/5 dark:hover:text-red-500 overflow-hidden active:scale-95 ${isCollapsed ? 'justify-center w-14 mx-auto' : 'px-4 w-full'
               }`}
           >
             <LogOut className="w-5 h-5 shrink-0 transition-all duration-500 group-hover:-translate-x-1" />
