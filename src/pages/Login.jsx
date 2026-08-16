@@ -43,12 +43,12 @@ export default function Login() {
 
         {/* Top Logo Space */}
         <div className="flex flex-col items-center gap-4 animate-in fade-in slide-in-from-top-8 duration-1000 ease-[cubic-bezier(0.32,0.72,0,1)]">
-          <div className="w-16 h-16 rounded-full bg-white shadow-sm border border-slate-200 dark:bg-white/5 dark:border-white/10 dark:shadow-none flex items-center justify-center transition-colors duration-500">
-            <div className="w-8 h-8 bg-red-600 rounded-full" /> {/* Placeholder Logo */}
+          <div className="w-16 h-16 rounded-full bg-white shadow-sm border border-slate-200 dark:bg-white/5 dark:border-white/10 dark:shadow-none flex items-center justify-center transition-colors duration-500 overflow-hidden">
+            <img src="/logo-fertex.webp" alt="Fertex Logo" className="w-full h-full object-cover" />
           </div>
           <div className="flex flex-col items-center">
             <span className="text-sm font-medium tracking-[0.2em] uppercase text-slate-500 dark:text-white/50 text-center">Admin Portal</span>
-            <h1 className="text-2xl font-bold tracking-tight text-center text-slate-900 dark:text-white transition-colors duration-500">TaekwondoFertex</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-center text-slate-900 dark:text-white transition-colors duration-500">Taekwondo Fertex</h1>
           </div>
         </div>
 
@@ -56,10 +56,10 @@ export default function Login() {
         <div className="w-full">
 
           {/* Outer Shell */}
-          <div className="p-2 bg-white/50 border border-slate-200 border-t-[4px] border-t-red-600 dark:bg-white/[0.02] dark:border-white/10 dark:border-t-red-600 rounded-[2rem] shadow-xl dark:shadow-2xl backdrop-blur-xl animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-150 ease-[cubic-bezier(0.32,0.72,0,1)] fill-mode-both transition-colors">
+          <div className="p-2 bg-white/50 border border-slate-200 border-t-[4px] border-t-red-600 dark:bg-white/[0.04] dark:border-white/15 dark:border-t-red-600 rounded-[2rem] shadow-xl dark:shadow-2xl backdrop-blur-xl animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-150 ease-[cubic-bezier(0.32,0.72,0,1)] fill-mode-both transition-colors">
 
             {/* Inner Core */}
-            <div className="p-8 sm:p-10 bg-white dark:bg-[#0a0a0a] rounded-[calc(2rem-0.5rem)] shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] flex flex-col gap-8 relative overflow-hidden transition-colors duration-500">
+            <div className="p-8 sm:p-10 bg-white dark:bg-[#141414] rounded-[calc(2rem-0.5rem)] shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] flex flex-col gap-8 relative overflow-hidden transition-colors duration-500">
 
               <div className="flex flex-col gap-2 relative z-10">
                 <h2 className="text-3xl font-semibold tracking-tight">Acceder</h2>

@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import DashboardLayout from '../components/DashboardLayout';
 import { supabase } from '../services/supabaseClient';
-import { Plus, Clock, X, Loader2, AlertCircle, Calendar, Edit2, Trash2 } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, Users, Plus, X, Loader2, Search, Filter, Edit2, Trash2 } from 'lucide-react';
 
 const DIAS_SEMANA = [
   { full: 'Lunes', short: 'L' },
@@ -199,7 +198,7 @@ export default function Horarios() {
   };
 
   return (
-    <DashboardLayout>
+    <>
       <div className="flex flex-col gap-8">
 
         {/* Header Section */}
@@ -484,6 +483,6 @@ export default function Horarios() {
         </div>,
         document.body
       )}
-    </DashboardLayout>
+    </>
   );
 }

@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import DashboardLayout from '../components/DashboardLayout';
 import { supabase } from '../services/supabaseClient';
-import { Plus, Minus, CreditCard, X, Loader2, Calendar, Edit2, Trash2, AlertCircle, Search, Filter } from 'lucide-react';
+import { Search, Filter, Plus, Calendar, DollarSign, CreditCard, CheckCircle, XCircle, ArrowRight, Clock, FileText, User, Receipt, Edit2, Trash2, Loader2 } from 'lucide-react';
 import Pagination from '../components/Pagination';
 
 const getTodayStr = () => {
@@ -216,7 +215,7 @@ export default function Pagos() {
   const currentPagos = filteredPagos.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
-    <DashboardLayout>
+    <>
       <div className="flex flex-col gap-8">
 
         {/* Header Section */}
@@ -284,7 +283,7 @@ export default function Pagos() {
                 <Loader2 className="w-8 h-8 text-red-600 animate-spin" />
               </div>
             ) : filteredPagos.length === 0 ? (
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8 animate-in fade-in zoom-in-95 duration-700">
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8">
                 <div className="w-20 h-20 rounded-full bg-slate-100 border border-slate-200 dark:bg-white/5 dark:border-white/10 flex items-center justify-center mb-6 transition-colors duration-500">
                   <CreditCard className="w-8 h-8 text-slate-400 dark:text-white/30" strokeWidth={1.5} />
                 </div>
@@ -298,7 +297,7 @@ export default function Pagos() {
                 </p>
               </div>
             ) : (
-              <table className="w-full text-left border-collapse whitespace-nowrap animate-in fade-in duration-700">
+              <table className="w-full text-left border-collapse whitespace-nowrap">
                 <thead>
                   <tr className="border-b border-slate-200 dark:border-white/10 transition-colors duration-500">
                     <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-white/40">Alumno</th>
@@ -582,6 +581,6 @@ export default function Pagos() {
         </div>,
         document.body
       )}
-    </DashboardLayout>
+    </>
   );
 }

@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import DashboardLayout from '../components/DashboardLayout';
 import { supabase } from '../services/supabaseClient';
 import { Loader2, TrendingUp, Users, AlertTriangle, Calendar } from 'lucide-react';
 
@@ -117,7 +116,7 @@ export default function Dashboard() {
   };
 
   return (
-    <DashboardLayout>
+    <>
       <div className="flex flex-col gap-8">
 
         {/* Header Section */}
@@ -252,6 +251,6 @@ export default function Dashboard() {
         )}
 
       </div>
-    </DashboardLayout>
+    </>
   );
 }

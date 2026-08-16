@@ -8,6 +8,8 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Horarios from './pages/Horarios';
 import Cinturones from './pages/Cinturones';
 
+import DashboardLayout from './components/DashboardLayout';
+
 function App() {
   return (
     <Routes>
@@ -17,15 +19,17 @@ function App() {
         path="/dashboard/*" 
         element={
           <ProtectedRoute>
-            <Routes>
-              <Route path="" element={<Dashboard />} />
-              <Route path="alumnos" element={<Alumnos />} />
-              <Route path="pagos" element={<Pagos />} />
-              <Route path="asistencia" element={<Asistencia />} />
-              <Route path="horarios" element={<Horarios />} />
-              <Route path="cinturones" element={<Cinturones />} />
-              <Route path="*" element={<Dashboard />} /> {/* Fallback temporary */}
-            </Routes>
+            <DashboardLayout>
+              <Routes>
+                <Route path="" element={<Dashboard />} />
+                <Route path="alumnos" element={<Alumnos />} />
+                <Route path="pagos" element={<Pagos />} />
+                <Route path="asistencia" element={<Asistencia />} />
+                <Route path="horarios" element={<Horarios />} />
+                <Route path="cinturones" element={<Cinturones />} />
+                <Route path="*" element={<Dashboard />} /> {/* Fallback temporary */}
+              </Routes>
+            </DashboardLayout>
           </ProtectedRoute>
         } 
       />
