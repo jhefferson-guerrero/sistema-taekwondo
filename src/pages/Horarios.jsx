@@ -15,6 +15,7 @@ const DIAS_SEMANA = [
 
 export default function Horarios() {
   const [horarios, setHorarios] = useState([]);
+  const [profesores, setProfesores] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -27,20 +28,32 @@ export default function Horarios() {
     nombre: '',
     dias: [],
     hora_inicio: '',
-    hora_fin: ''
+    hora_fin: '',
+    profesor_id: ''
   });
   const [formErrors, setFormErrors] = useState({});
 
   useEffect(() => {
     fetchHorarios();
+    fetchProfesores();
   }, []);
+
+  const fetchProfesores = async () => {
+    try {
+      const { data, error } = await supabase.from('profesores').select('id, nombre, apellidos, disciplina').eq('estado', 'Activo');
+      if (error) throw error;
+      setProfesores(data || []);
+    } catch (error) {
+      console.error('Error fetching profesores:', error);
+    }
+  };
 
   const fetchHorarios = async () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
         .from('horarios')
-        .select('*')
+        .select('*, profesores(nombre, apellidos)')
         .order('fecha_creacion', { ascending: false });
 
       if (error) throw error;
@@ -147,7 +160,8 @@ export default function Horarios() {
         nombre: formData.nombre,
         dias: formData.dias,
         hora_inicio: formData.hora_inicio,
-        hora_fin: formData.hora_fin
+        hora_fin: formData.hora_fin,
+        profesor_id: formData.profesor_id || null
       };
 
       if (editId) {
@@ -164,7 +178,7 @@ export default function Horarios() {
       }
 
       setIsModalOpen(false);
-      setFormData({ nombre: '', dias: [], hora_inicio: '', hora_fin: '' });
+      setFormData({ nombre: '', dias: [], hora_inicio: '', hora_fin: '', profesor_id: '' });
       setEditId(null);
       await fetchHorarios();
     } catch (error) {
@@ -177,7 +191,7 @@ export default function Horarios() {
 
   const openNewModal = () => {
     setEditId(null);
-    setFormData({ nombre: '', dias: [], hora_inicio: '', hora_fin: '' });
+    setFormData({ nombre: '', dias: [], hora_inicio: '', hora_fin: '', profesor_id: '' });
     setFormErrors({});
     setIsModalOpen(true);
   };
@@ -188,12 +202,12 @@ export default function Horarios() {
       nombre: horario.nombre,
       dias: horario.dias || [],
       hora_inicio: formatTime(horario.hora_inicio),
-      hora_fin: formatTime(horario.hora_fin)
+      hora_fin: formatTime(horario.hora_fin),
+      profesor_id: horario.profesor_id || ''
     });
     setFormErrors({});
     setIsModalOpen(true);
   };
-
   const handleDelete = async () => {
     if (!deleteId) return;
     try {
@@ -447,6 +461,27 @@ export default function Horarios() {
                       )}
                     </div>
                   </div>
+                </div>
+
+                {/* Profesor a cargo */}
+                <div className="flex flex-col gap-2">
+                  <label className="text-xs uppercase tracking-widest text-slate-700 dark:text-white/80 font-medium ml-1">
+                    Profesor a cargo
+                  </label>
+                  <select
+                    name="profesor_id"
+                    value={formData.profesor_id}
+                    onChange={handleInputChange}
+                    disabled={saving}
+                    className="w-full bg-slate-50 border border-slate-200 text-slate-900 focus:bg-white dark:bg-slate-800 dark:focus:bg-slate-800 dark:border-white/10 dark:text-white rounded-xl px-4 py-3 focus:outline-none focus:border-red-500 transition-colors duration-300"
+                  >
+                    <option value="" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white">-- Sin Profesor --</option>
+                    {profesores.map(p => (
+                      <option key={p.id} value={p.id} className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white">
+                        {p.nombre} {p.apellidos} ({p.disciplina})
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <button

@@ -13,7 +13,8 @@ import {
   ChevronRight,
   Menu,
   Sun,
-  Moon
+  Moon,
+  GraduationCap
 } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 
@@ -24,6 +25,7 @@ const navItems = [
   { name: 'Grados y Ascensos', path: '/dashboard/cinturones', icon: Award },
   { name: 'Asistencia', path: '/dashboard/asistencia', icon: CalendarCheck },
   { name: 'Horarios', path: '/dashboard/horarios', icon: Clock },
+  { name: 'Profesores', path: '/dashboard/profesores', icon: GraduationCap },
 ];
 
 export default function DashboardLayout({ children }) {
