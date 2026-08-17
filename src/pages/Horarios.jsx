@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { supabase } from '../services/supabaseClient';
-import { Calendar as CalendarIcon, Clock, Users, Plus, X, Loader2, Search, Filter, Edit2, Trash2 } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, Users, Plus, X, Loader2, Search, Filter, Edit2, Trash2, AlertCircle } from 'lucide-react';
 
 const DIAS_SEMANA = [
   { full: 'Lunes', short: 'L' },
@@ -70,31 +70,54 @@ export default function Horarios() {
   };
 
   const handleTimeChange = (e) => {
-    let value = e.target.value.replace(/\D/g, ''); // Remove non-digits
-
-    if (value.length > 4) {
-      value = value.substring(0, 4);
+    let val = e.target.value;
+    
+    // Allow digits and colons
+    val = val.replace(/[^\d:]/g, '');
+    
+    // Prevent multiple colons
+    const colonCount = (val.match(/:/g) || []).length;
+    if (colonCount > 1) {
+      val = val.replace(/:/g, (match, offset, string) => {
+        return offset === string.indexOf(':') ? ':' : '';
+      });
     }
 
-    if (value.length > 2) {
-      value = value.substring(0, 2) + ':' + value.substring(2, 4);
+    // If user types a colon right after a single digit (e.g. "5:"), auto-pad it to "05:"
+    if (val.length === 2 && val[1] === ':') {
+      val = '0' + val;
     }
 
-    // Basic validation to prevent invalid hours/minutes
-    if (value.length >= 2) {
-      const hours = parseInt(value.substring(0, 2), 10);
-      if (hours > 23) {
-        value = '23' + value.substring(2);
+    // Strip colon to get raw digits for formatting
+    let digits = val.replace(/:/g, '');
+    if (digits.length > 4) digits = digits.substring(0, 4);
+
+    let result = '';
+    if (digits.length > 2) {
+      result = digits.substring(0, 2) + ':' + digits.substring(2);
+    } else {
+      result = digits;
+      // Preserve manual colon if they typed 2 digits then colon (e.g. "12:")
+      if (val.endsWith(':') && digits.length === 2) {
+        result += ':';
       }
     }
-    if (value.length >= 5) {
-      const mins = parseInt(value.substring(3, 5), 10);
-      if (mins > 59) {
-        value = value.substring(0, 3) + '59';
-      }
+
+    // Validate hours
+    if (result.length >= 2) {
+      let hours = parseInt(result.substring(0, 2), 10);
+      if (hours > 23) hours = 23;
+      result = hours.toString().padStart(2, '0') + result.substring(2);
+    }
+    
+    // Validate minutes
+    if (result.length === 5) {
+      let mins = parseInt(result.substring(3, 5), 10);
+      if (mins > 59) mins = 59;
+      result = result.substring(0, 3) + mins.toString().padStart(2, '0');
     }
 
-    setFormData({ ...formData, [e.target.name]: value });
+    setFormData({ ...formData, [e.target.name]: result });
     setFormErrors({ ...formErrors, [e.target.name]: '' });
   };
 
@@ -324,7 +347,7 @@ export default function Horarios() {
 
                 {/* Nombre */}
                 <div className="flex flex-col gap-2">
-                  <label className="text-xs uppercase tracking-widest text-slate-500 dark:text-white/40 font-medium ml-1">
+                  <label className="text-xs uppercase tracking-widest text-slate-700 dark:text-white/80 font-medium ml-1">
                     Nombre del grupo
                   </label>
                   <input
@@ -347,7 +370,7 @@ export default function Horarios() {
 
                 {/* Días Selector */}
                 <div className="flex flex-col gap-2">
-                  <label className="text-xs uppercase tracking-widest text-slate-500 dark:text-white/40 font-medium ml-1">
+                  <label className="text-xs uppercase tracking-widest text-slate-700 dark:text-white/80 font-medium ml-1">
                     Días de la semana
                   </label>
                   <div className="flex justify-between gap-1 sm:gap-2">
@@ -381,7 +404,7 @@ export default function Horarios() {
                 {/* Horas */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="flex flex-col gap-2">
-                    <label className="text-xs uppercase tracking-widest text-slate-500 dark:text-white/40 font-medium ml-1">
+                    <label className="text-xs uppercase tracking-widest text-slate-700 dark:text-white/80 font-medium ml-1">
                       Hora Inicio
                     </label>
                     <input
@@ -403,7 +426,7 @@ export default function Horarios() {
                     </div>
                   </div>
                   <div className="flex flex-col gap-2">
-                    <label className="text-xs uppercase tracking-widest text-slate-500 dark:text-white/40 font-medium ml-1">
+                    <label className="text-xs uppercase tracking-widest text-slate-700 dark:text-white/80 font-medium ml-1">
                       Hora Fin
                     </label>
                     <input
@@ -459,7 +482,7 @@ export default function Horarios() {
               </div>
               <div>
                 <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2 transition-all duration-300 ease-in-out">¿Eliminar horario?</h3>
-                <p className="text-sm text-slate-500 dark:text-white/50 transition-all duration-300 ease-in-out">Esta acción no se puede deshacer y los alumnos asociados quedarán sin horario asignado.</p>
+                <p className="text-sm text-slate-700 dark:text-white/80 transition-all duration-300 ease-in-out">Esta acción no se puede deshacer y los alumnos asociados quedarán sin horario asignado.</p>
               </div>
               <div className="flex items-center gap-3 mt-2">
                 <button

@@ -144,7 +144,7 @@ export default function Dashboard() {
               <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 p-1.5 bg-slate-50/80 dark:bg-white/[0.02] border border-slate-300 dark:border-white/20 rounded-[2rem] shadow-[0_12px_40px_-12px_rgba(0,0,0,0.15)] dark:shadow-[0_12px_40px_-12px_rgba(255,255,255,0.05)] backdrop-blur-xl group hover:-translate-y-1 hover:shadow-[0_20px_40px_-12px_rgba(0,0,0,0.2)] hover:dark:shadow-[0_20px_40px_-12px_rgba(255,255,255,0.1)] transition-all ease-[cubic-bezier(0.32,0.72,0,1)]">
                 <div className="p-6 bg-white dark:bg-slate-800 rounded-[calc(2rem-0.375rem)] shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] flex flex-col gap-4 h-full relative overflow-hidden transition-colors duration-500">
                   <div className="flex justify-between items-start">
-                    <h3 className="text-slate-500 dark:text-white/50 text-xs font-semibold tracking-[0.15em] uppercase">Ingresos del Mes</h3>
+                    <h3 className="text-slate-700 dark:text-white/80 text-xs font-semibold tracking-[0.15em] uppercase">Ingresos del Mes</h3>
                     <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 dark:bg-white/5 dark:border-white/10 flex items-center justify-center transition-colors duration-500">
                       <TrendingUp className="w-5 h-5 text-red-600 dark:text-red-500" />
                     </div>
@@ -160,7 +160,7 @@ export default function Dashboard() {
               <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100 p-1.5 bg-slate-50/80 dark:bg-white/[0.02] border border-slate-300 dark:border-white/20 rounded-[2rem] shadow-[0_12px_40px_-12px_rgba(0,0,0,0.15)] dark:shadow-[0_12px_40px_-12px_rgba(255,255,255,0.05)] backdrop-blur-xl group hover:-translate-y-1 hover:shadow-[0_20px_40px_-12px_rgba(0,0,0,0.2)] hover:dark:shadow-[0_20px_40px_-12px_rgba(255,255,255,0.1)] transition-all ease-[cubic-bezier(0.32,0.72,0,1)] fill-mode-both">
                 <div className="p-6 bg-white dark:bg-slate-800 rounded-[calc(2rem-0.375rem)] shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] flex flex-col gap-4 h-full relative overflow-hidden transition-colors duration-500">
                   <div className="flex justify-between items-start">
-                    <h3 className="text-slate-500 dark:text-white/50 text-xs font-semibold tracking-[0.15em] uppercase">Alumnos Registrados</h3>
+                    <h3 className="text-slate-700 dark:text-white/80 text-xs font-semibold tracking-[0.15em] uppercase">Alumnos Registrados</h3>
                     <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 dark:bg-white/5 dark:border-white/10 flex items-center justify-center transition-colors duration-500">
                       <Users className="w-5 h-5 text-red-600 dark:text-red-500" />
                     </div>
@@ -175,7 +175,7 @@ export default function Dashboard() {
               <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200 p-1.5 bg-slate-50/80 dark:bg-white/[0.02] border border-slate-300 dark:border-white/20 rounded-[2rem] shadow-[0_12px_40px_-12px_rgba(0,0,0,0.15)] dark:shadow-[0_12px_40px_-12px_rgba(255,255,255,0.05)] backdrop-blur-xl group hover:-translate-y-1 hover:shadow-[0_20px_40px_-12px_rgba(0,0,0,0.2)] hover:dark:shadow-[0_20px_40px_-12px_rgba(255,255,255,0.1)] transition-all ease-[cubic-bezier(0.32,0.72,0,1)] fill-mode-both">
                 <div className="p-6 bg-white dark:bg-slate-800 rounded-[calc(2rem-0.375rem)] shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] flex flex-col gap-4 h-full relative overflow-hidden transition-colors duration-500">
                   <div className="flex justify-between items-start">
-                    <h3 className="text-slate-500 dark:text-white/50 text-xs font-semibold tracking-[0.15em] uppercase">Mensualidades Vencidas</h3>
+                    <h3 className="text-slate-700 dark:text-white/80 text-xs font-semibold tracking-[0.15em] uppercase">Mensualidades Vencidas</h3>
                     <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 dark:bg-white/5 dark:border-white/10 flex items-center justify-center transition-colors duration-500">
                       <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-500" />
                     </div>
@@ -192,7 +192,7 @@ export default function Dashboard() {
             <div className="mt-4 flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-700 delay-300 fill-mode-both">
               <div className="flex items-center gap-2 px-2">
                 <h2 className="text-lg font-bold text-slate-900 dark:text-white">Alertas de Vencimiento</h2>
-                <span className="text-sm text-slate-500 dark:text-white/50">(-15 días a +5 días)</span>
+                <span className="text-sm text-slate-700 dark:text-white/80">(-15 días a +5 días)</span>
               </div>
 
               <div className="p-1.5 bg-slate-50/80 dark:bg-white/[0.02] border border-slate-300 dark:border-white/20 border-t-[4px] border-t-red-600 dark:border-t-red-600 rounded-[2rem] shadow-[0_12px_40px_-12px_rgba(0,0,0,0.15)] dark:shadow-[0_12px_40px_-12px_rgba(255,255,255,0.05)] backdrop-blur-xl transition-all duration-700 w-full overflow-hidden">
@@ -204,15 +204,15 @@ export default function Dashboard() {
                         <AlertTriangle className="w-8 h-8 text-slate-300 dark:text-white/20" />
                       </div>
                       <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Todo al día</h3>
-                      <p className="text-slate-500 dark:text-white/50 mt-1">No hay mensualidades por vencer pronto ni vencimientos recientes.</p>
+                      <p className="text-slate-700 dark:text-white/80 mt-1">No hay mensualidades por vencer pronto ni vencimientos recientes.</p>
                     </div>
                   ) : (
                     <table className="w-full text-left border-collapse whitespace-nowrap">
                       <thead>
                         <tr className="border-b border-slate-200 dark:border-white/10 transition-colors duration-500 bg-slate-50/50 dark:bg-white/[0.02]">
-                          <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-white/40">Alumno</th>
-                          <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-white/40">Fecha de Vencimiento</th>
-                          <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-white/40 text-right">Estado</th>
+                          <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-700 dark:text-white/80">Alumno</th>
+                          <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-700 dark:text-white/80">Fecha de Vencimiento</th>
+                          <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-700 dark:text-white/80 text-right">Estado</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-200 dark:divide-white/5 transition-all duration-300 ease-in-out">

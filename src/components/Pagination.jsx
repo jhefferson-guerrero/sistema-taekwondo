@@ -7,7 +7,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange, tota
 
   return (
     <div className="flex items-center justify-between px-6 py-4 border-t border-slate-200 dark:border-white/10 bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm rounded-b-[calc(2rem-0.375rem)]">
-      <div className="flex items-center text-sm text-slate-500 dark:text-white/50 font-medium">
+      <div className="flex items-center text-sm text-slate-700 dark:text-white/80 font-medium">
         Mostrando <span className="text-slate-900 dark:text-white mx-1 font-bold">{totalItems}</span> registros
       </div>
       

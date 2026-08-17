@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { supabase } from '../services/supabaseClient';
-import { Search, Filter, Award, Loader2, X, Users, History, ArrowUpCircle } from 'lucide-react';
+import { Search, Filter, Award, Loader2, X, Users, History, ArrowUpCircle, Trash2, AlertCircle } from 'lucide-react';
 import Pagination from '../components/Pagination';
 
 export default function Cinturones() {
@@ -16,6 +16,8 @@ export default function Cinturones() {
   const [isAscensoModalOpen, setIsAscensoModalOpen] = useState(false);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [selectedAlumno, setSelectedAlumno] = useState(null);
+  const [deleteAscensoRegistro, setDeleteAscensoRegistro] = useState(null);
+  const [deletingAscenso, setDeletingAscenso] = useState(false);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -68,16 +70,19 @@ export default function Cinturones() {
         fechaReferencia.setHours(0, 0, 0, 0);
 
         const clasesAcumuladas = (a.asistencias || []).filter(asist => {
-          if (asist.estado === 'Congelado') return false;
+          if (asist.estado !== 'Presente') return false; // CORRECCIÓN: El estado en la BD es 'Presente'
           const fechaAsist = new Date(asist.fecha_asistencia);
           fechaAsist.setHours(0, 0, 0, 0);
           return fechaAsist >= fechaReferencia;
         }).length;
 
+        const clasesTotales = (a.asistencias || []).filter(asist => asist.estado === 'Presente').length;
+
         return {
           ...a,
           historial,
-          clasesAcumuladas
+          clasesAcumuladas,
+          clasesTotales
         };
       });
 
@@ -150,6 +155,57 @@ export default function Cinturones() {
       alert('Error al registrar el ascenso.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDeleteAscenso = async () => {
+    if (!deleteAscensoRegistro) return;
+
+    try {
+      setDeletingAscenso(true);
+      // 1. Eliminar del historial
+      const { error: deleteError } = await supabase
+        .from('historial_cinturones')
+        .delete()
+        .eq('id', deleteAscensoRegistro.id);
+      
+      if (deleteError) throw deleteError;
+
+      // 2. Determinar el cinturón correcto (el examen más reciente que quede, o Blanco si no hay más)
+      const examenesRestantes = selectedAlumno.historial.filter(h => h.id !== deleteAscensoRegistro.id);
+      let cinturonCorrecto = 'Blanco';
+      if (examenesRestantes.length > 0) {
+        cinturonCorrecto = examenesRestantes[0].cinturon_nuevo;
+      }
+
+      // 3. Actualizar el cinturón actual del alumno al correcto
+      const { error: updateError } = await supabase
+        .from('alumnos')
+        .update({ cinturon: cinturonCorrecto })
+        .eq('id', selectedAlumno.id);
+      
+      if (updateError) throw updateError;
+
+      setDeleteAscensoRegistro(null);
+      // setIsHistoryModalOpen(false); // No cerramos el historial para que vea el cambio
+      await fetchData();
+      
+      // Actualizar el selectedAlumno para que se refleje inmediatamente en el modal de historial
+      setSelectedAlumno(prev => {
+        if (!prev) return prev;
+        const newHistorial = prev.historial.filter(h => h.id !== deleteAscensoRegistro.id);
+        return {
+          ...prev,
+          cinturon: examenesRestantes.length > 0 ? examenesRestantes[0].cinturon_nuevo : 'Blanco',
+          historial: newHistorial
+        };
+      });
+
+    } catch (error) {
+      console.error('Error deleting ascenso:', error);
+      alert('Error al eliminar el ascenso.');
+    } finally {
+      setDeletingAscenso(false);
     }
   };
 
@@ -240,10 +296,11 @@ export default function Cinturones() {
               <table className="w-full text-left border-collapse whitespace-nowrap">
                 <thead>
                   <tr className="border-b border-slate-200 dark:border-white/10 transition-colors duration-500">
-                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-white/40">Alumno</th>
-                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-white/40 text-center">Cinturón Actual</th>
-                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-white/40 text-center">Clases Acumuladas</th>
-                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-white/40 text-center">Acciones</th>
+                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-700 dark:text-white/80">Alumno</th>
+                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-700 dark:text-white/80 text-center">Cinturón Actual</th>
+                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-700 dark:text-white/80 text-center">Clases Acumuladas</th>
+                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-700 dark:text-white/80 text-center">Clases Totales</th>
+                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-700 dark:text-white/80 text-center">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 dark:divide-white/5 transition-all duration-300 ease-in-out">
@@ -265,7 +322,12 @@ export default function Cinturones() {
                             }`}>
                             {alumno.clasesAcumuladas}
                           </div>
-                          <span className="text-xs text-slate-500 dark:text-white/50">desde el último examen</span>
+                          <span className="text-xs text-slate-700 dark:text-white/80">desde el último examen</span>
+                        </div>
+                      </td>
+                      <td className="px-8 py-5 text-center">
+                        <div className="font-semibold text-slate-700 dark:text-white/70">
+                          {alumno.clasesTotales}
                         </div>
                       </td>
                       <td className="px-8 py-5 text-center">
@@ -315,7 +377,7 @@ export default function Cinturones() {
                   <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white transition-all duration-300 ease-in-out">
                     Registrar Ascenso
                   </h2>
-                  <p className="text-sm text-slate-500 dark:text-white/50 mt-1">
+                  <p className="text-sm text-slate-700 dark:text-white/80 mt-1">
                     {selectedAlumno.nombre} {selectedAlumno.apellidos}
                   </p>
                 </div>
@@ -330,19 +392,19 @@ export default function Cinturones() {
 
               <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 dark:bg-white/5 dark:border-white/10 flex justify-between items-center">
                 <div className="flex flex-col">
-                  <span className="text-xs text-slate-500 dark:text-white/40 uppercase tracking-widest font-semibold mb-1">Cinturón Actual</span>
+                  <span className="text-xs text-slate-700 dark:text-white/80 uppercase tracking-widest font-semibold mb-1">Cinturón Actual</span>
                   <span className="font-bold text-slate-900 dark:text-white">{selectedAlumno.cinturon}</span>
                 </div>
                 <ArrowUpCircle className="w-5 h-5 text-slate-400 dark:text-white/30" />
                 <div className="flex flex-col items-end">
-                  <span className="text-xs text-slate-500 dark:text-white/40 uppercase tracking-widest font-semibold mb-1">Clases Acumuladas</span>
+                  <span className="text-xs text-slate-700 dark:text-white/80 uppercase tracking-widest font-semibold mb-1">Clases Acumuladas</span>
                   <span className="font-bold text-slate-900 dark:text-white">{selectedAlumno.clasesAcumuladas}</span>
                 </div>
               </div>
 
               <form onSubmit={handleSubmitAscenso} className="flex flex-col gap-5">
                 <div className="flex flex-col gap-2">
-                  <label className="text-xs uppercase tracking-widest text-slate-500 dark:text-white/40 font-medium ml-1 transition-colors duration-500">Nuevo Cinturón</label>
+                  <label className="text-xs uppercase tracking-widest text-slate-700 dark:text-white/80 font-medium ml-1 transition-colors duration-500">Nuevo Cinturón</label>
                   <select
                     name="cinturon_nuevo"
                     value={formData.cinturon_nuevo}
@@ -359,7 +421,7 @@ export default function Cinturones() {
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  <label className="text-xs uppercase tracking-widest text-slate-500 dark:text-white/40 font-medium ml-1 transition-colors duration-500">Fecha de Examen</label>
+                  <label className="text-xs uppercase tracking-widest text-slate-700 dark:text-white/80 font-medium ml-1 transition-colors duration-500">Fecha de Examen</label>
                   <input
                     type="date"
                     name="fecha_examen"
@@ -372,7 +434,7 @@ export default function Cinturones() {
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  <label className="text-xs uppercase tracking-widest text-slate-500 dark:text-white/40 font-medium ml-1 transition-colors duration-500">Comentarios (Opcional)</label>
+                  <label className="text-xs uppercase tracking-widest text-slate-700 dark:text-white/80 font-medium ml-1 transition-colors duration-500">Comentarios (Opcional)</label>
                   <textarea
                     name="comentarios"
                     value={formData.comentarios}
@@ -417,7 +479,7 @@ export default function Cinturones() {
                   <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white transition-all duration-300 ease-in-out">
                     Historial de Ascensos
                   </h2>
-                  <p className="text-sm text-slate-500 dark:text-white/50">
+                  <p className="text-sm text-slate-700 dark:text-white/80">
                     {selectedAlumno.nombre} {selectedAlumno.apellidos}
                   </p>
                 </div>
@@ -434,7 +496,7 @@ export default function Cinturones() {
                   <div className="flex flex-col items-center justify-center text-center p-8">
                     <Award className="w-12 h-12 text-slate-300 dark:text-white/20 mb-4" />
                     <h3 className="text-lg font-medium text-slate-900 dark:text-white">Sin ascensos registrados</h3>
-                    <p className="text-sm text-slate-500 dark:text-white/50 mt-1">Este alumno aún no ha rendido ningún examen de grado.</p>
+                    <p className="text-sm text-slate-700 dark:text-white/80 mt-1">Este alumno aún no ha rendido ningún examen de grado.</p>
                   </div>
                 ) : (
                   <div className="relative border-l-2 border-slate-200 dark:border-white/10 ml-4 py-2 space-y-8">
@@ -445,15 +507,26 @@ export default function Cinturones() {
                           <div className="flex items-center gap-3">
                             <span className="font-bold text-lg text-slate-900 dark:text-white">{registro.cinturon_nuevo}</span>
                             {registro.cinturon_anterior && (
-                              <span className="text-sm text-slate-500 dark:text-white/50 flex items-center gap-1">
+                              <span className="text-sm text-slate-700 dark:text-white/80 flex items-center gap-1">
                                 <ArrowUpCircle className="w-4 h-4" />
                                 de {registro.cinturon_anterior}
                               </span>
                             )}
                           </div>
-                          <span className="text-sm font-medium text-slate-500 dark:text-white/40 bg-slate-100 dark:bg-white/5 px-3 py-1 rounded-full w-fit">
-                            {new Date(registro.fecha_examen).toLocaleDateString()}
-                          </span>
+                          <div className="flex items-center gap-3">
+                            <span className="text-sm font-semibold text-slate-900 dark:text-white/90 bg-slate-100 dark:bg-white/5 px-3 py-1 rounded-full w-fit">
+                              {new Date(registro.fecha_examen).toLocaleDateString()}
+                            </span>
+                            {idx === 0 && (
+                              <button
+                                onClick={() => setDeleteAscensoRegistro(registro)}
+                                className="p-1.5 text-slate-500 hover:text-red-600 dark:text-white/60 dark:hover:text-red-500 transition-all duration-300 ease-in-out rounded-lg hover:bg-slate-200 dark:hover:bg-white/10"
+                                title="Eliminar último ascenso"
+                              >
+                                <Trash2 className="w-[18px] h-[18px] transition-transform duration-300 hover:scale-110" />
+                              </button>
+                            )}
+                          </div>
                         </div>
                         {registro.comentarios && (
                           <div className="p-4 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 text-sm text-slate-700 dark:text-white/70">
@@ -466,6 +539,45 @@ export default function Cinturones() {
                 )}
               </div>
 
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Modal - Confirmar Eliminar Ascenso */}
+      {deleteAscensoRegistro && createPortal(
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/40 dark:bg-slate-800/60 backdrop-blur-md transition-all duration-300 ease-in-out" onClick={() => !deletingAscenso && setDeleteAscensoRegistro(null)} />
+
+          <div className="relative w-full max-w-sm p-1.5 bg-slate-50/80 dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 rounded-[2rem] shadow-xl dark:shadow-2xl animate-in fade-in zoom-in-95 duration-300 ease-in-out">
+            <div className="p-8 bg-white dark:bg-slate-800 rounded-[calc(2rem-0.375rem)] shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] flex flex-col gap-6 text-center transition-all duration-300 ease-in-out">
+              <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center mx-auto">
+                <AlertCircle className="w-8 h-8 text-red-600 dark:text-red-500" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2 transition-all duration-300 ease-in-out">¿Eliminar ascenso?</h3>
+                <p className="text-sm text-slate-700 dark:text-white/80 transition-all duration-300 ease-in-out">
+                  Se eliminará el ascenso a <strong>{deleteAscensoRegistro.cinturon_nuevo}</strong> permanentemente.
+                </p>
+              </div>
+              <div className="flex items-center gap-3 mt-2">
+                <button
+                  onClick={() => setDeleteAscensoRegistro(null)}
+                  disabled={deletingAscenso}
+                  className="flex-1 py-3 px-4 rounded-xl font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 dark:text-white dark:bg-white/5 dark:hover:bg-white/10 transition-all duration-300 ease-in-out disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleDeleteAscenso}
+                  disabled={deletingAscenso}
+                  className="flex-1 py-3 px-4 rounded-xl font-medium text-white bg-red-600 hover:bg-red-700 transition-all duration-300 ease-in-out disabled:opacity-70 flex items-center justify-center gap-2"
+                >
+                  {deletingAscenso && <Loader2 className="w-4 h-4 animate-spin" />}
+                  <span>Eliminar</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>,
