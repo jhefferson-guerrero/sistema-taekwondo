@@ -222,7 +222,7 @@ export default function Asistencia() {
                 <ChevronLeft className="w-4 h-4" />
               </button>
               <div className="flex items-center gap-2 bg-slate-100 dark:bg-white/5 px-4 py-2 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm">
-                <Calendar className="w-4 h-4 text-slate-500 dark:text-white/50" />
+                <Calendar className="w-4 h-4 text-slate-700 dark:text-white/80" />
                 <input 
                   type="date" 
                   value={selectedDate}
@@ -297,11 +297,11 @@ export default function Asistencia() {
               <table className="w-full text-left border-collapse whitespace-nowrap">
                 <thead>
                   <tr className="border-b border-slate-200 dark:border-white/10 transition-colors duration-500">
-                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-white/40">Alumno</th>
-                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-white/40 text-center">Cinturón</th>
-                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-white/40 text-center">Clases Restantes</th>
-                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-white/40 text-center">Última Asistencia</th>
-                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-white/40 text-center">Acción</th>
+                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-700 dark:text-white/80">Alumno</th>
+                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-700 dark:text-white/80 text-center">Cinturón</th>
+                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-700 dark:text-white/80 text-center">Clases Restantes</th>
+                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-700 dark:text-white/80 text-center">Última Asistencia</th>
+                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-700 dark:text-white/80 text-center">Acción</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 dark:divide-white/5 transition-all duration-300 ease-in-out">
@@ -331,7 +331,7 @@ export default function Asistencia() {
                         </td>
                         <td className="px-8 py-5 text-center">
                           {alumno.ultima_asistencia ? (
-                            <div className="inline-flex items-center justify-center gap-2 text-slate-500 dark:text-white/50 text-sm">
+                            <div className="inline-flex items-center justify-center gap-2 text-slate-700 dark:text-white/80 text-sm">
                               <Calendar className="w-4 h-4 opacity-50" />
                               {new Date(alumno.ultima_asistencia).toLocaleDateString('es-ES')}
                             </div>
@@ -393,7 +393,7 @@ export default function Asistencia() {
               </div>
               <div>
                 <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2 transition-all duration-300 ease-in-out">¿Anular Asistencia?</h3>
-                <p className="text-sm text-slate-500 dark:text-white/50 transition-all duration-300 ease-in-out">
+                <p className="text-sm text-slate-700 dark:text-white/80 transition-all duration-300 ease-in-out">
                   ¿Estás seguro de anular la asistencia seleccionada para <span className="font-semibold text-slate-900 dark:text-white">{undoAlumno.nombre}</span>?
                 </p>
               </div>

@@ -47,7 +47,7 @@ export default function Login() {
             <img src="/logo-fertex.webp" alt="Fertex Logo" className="w-full h-full object-cover" />
           </div>
           <div className="flex flex-col items-center">
-            <span className="text-sm font-medium tracking-[0.2em] uppercase text-slate-500 dark:text-white/50 text-center">Admin Portal</span>
+            <span className="text-sm font-medium tracking-[0.2em] uppercase text-slate-700 dark:text-white/80 text-center">Admin Portal</span>
             <h1 className="text-2xl font-bold tracking-tight text-center text-slate-900 dark:text-white transition-colors duration-500">Taekwondo Fertex</h1>
           </div>
         </div>
@@ -63,7 +63,7 @@ export default function Login() {
 
               <div className="flex flex-col gap-2 relative z-10">
                 <h2 className="text-3xl font-semibold tracking-tight">Acceder</h2>
-                <p className="text-slate-500 dark:text-white/40 text-sm transition-colors duration-500">Ingresa tus credenciales para continuar al panel de administración.</p>
+                <p className="text-slate-700 dark:text-white/80 text-sm transition-colors duration-500">Ingresa tus credenciales para continuar al panel de administración.</p>
               </div>
 
               {error && (

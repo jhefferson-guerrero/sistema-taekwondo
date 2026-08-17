@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { supabase } from '../services/supabaseClient';
-import { Search, Filter, Plus, Calendar, DollarSign, CreditCard, CheckCircle, XCircle, ArrowRight, Clock, FileText, User, Receipt, Edit2, Trash2, Loader2 } from 'lucide-react';
+import { Search, Filter, Plus, Minus, X, Calendar, DollarSign, CreditCard, CheckCircle, XCircle, ArrowRight, Clock, FileText, User, Receipt, Edit2, Trash2, Loader2, AlertCircle } from 'lucide-react';
 import Pagination from '../components/Pagination';
 
 const getTodayStr = () => {
@@ -300,13 +300,13 @@ export default function Pagos() {
               <table className="w-full text-left border-collapse whitespace-nowrap">
                 <thead>
                   <tr className="border-b border-slate-200 dark:border-white/10 transition-colors duration-500">
-                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-white/40">Alumno</th>
-                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-white/40 text-center">Monto</th>
-                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-white/40 text-center">Vigencia</th>
-                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-white/40 text-center">Método</th>
-                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-white/40 text-center">Fecha</th>
-                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-white/40 text-center">Estado</th>
-                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-white/40 text-center">Acciones</th>
+                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-700 dark:text-white/80">Alumno</th>
+                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-700 dark:text-white/80 text-center">Monto</th>
+                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-700 dark:text-white/80 text-center">Vigencia</th>
+                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-700 dark:text-white/80 text-center">Método</th>
+                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-700 dark:text-white/80 text-center">Fecha</th>
+                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-700 dark:text-white/80 text-center">Estado</th>
+                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-700 dark:text-white/80 text-center">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 dark:divide-white/5 transition-all duration-300 ease-in-out">
@@ -335,7 +335,7 @@ export default function Pagos() {
                         </span>
                       </td>
                       <td className="px-8 py-5 text-center">
-                        <div className="inline-flex items-center justify-center gap-2 text-slate-500 dark:text-white/50 text-sm">
+                        <div className="inline-flex items-center justify-center gap-2 text-slate-700 dark:text-white/80 text-sm">
                           <Calendar className="w-4 h-4 opacity-50" />
                           {new Date(pago.fecha_pago).toLocaleDateString()}
                         </div>
@@ -406,7 +406,7 @@ export default function Pagos() {
 
               <form onSubmit={handleSubmit} className="flex flex-col gap-5">
                 <div className="flex flex-col gap-2 relative">
-                  <label className="text-xs uppercase tracking-widest text-slate-500 dark:text-white/40 font-medium ml-1 transition-colors duration-500">Alumno</label>
+                  <label className="text-xs uppercase tracking-widest text-slate-700 dark:text-white/80 font-medium ml-1 transition-colors duration-500">Alumno</label>
                   <div className="relative">
                     <input
                       type="text"
@@ -428,7 +428,7 @@ export default function Pagos() {
                     {isAlumnoDropdownOpen && (
                       <div className="absolute z-10 w-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl shadow-lg max-h-48 overflow-y-auto custom-scrollbar">
                         {filteredAlumnosDropdown.length === 0 ? (
-                          <div className="px-4 py-3 text-sm text-slate-500 dark:text-white/50">No se encontraron alumnos</div>
+                          <div className="px-4 py-3 text-sm text-slate-700 dark:text-white/80">No se encontraron alumnos</div>
                         ) : (
                           filteredAlumnosDropdown.map(a => (
                             <button
@@ -452,7 +452,7 @@ export default function Pagos() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="flex flex-col gap-2">
-                    <label className="text-xs uppercase tracking-widest text-slate-500 dark:text-white/40 font-medium ml-1 transition-colors duration-500">Monto (S/)</label>
+                    <label className="text-xs uppercase tracking-widest text-slate-700 dark:text-white/80 font-medium ml-1 transition-colors duration-500">Monto (S/)</label>
                     <div className="relative">
                       <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-medium select-none pointer-events-none">S/</div>
                       <input
@@ -479,7 +479,7 @@ export default function Pagos() {
                   </div>
 
                   <div className="flex flex-col gap-2">
-                    <label className="text-xs uppercase tracking-widest text-slate-500 dark:text-white/40 font-medium ml-1 transition-colors duration-500">Fecha de Inicio</label>
+                    <label className="text-xs uppercase tracking-widest text-slate-700 dark:text-white/80 font-medium ml-1 transition-colors duration-500">Fecha de Inicio</label>
                     <div className="relative">
                       <input
                         type="date"
@@ -494,7 +494,7 @@ export default function Pagos() {
                   </div>
 
                   <div className="flex flex-col gap-2">
-                    <label className="text-xs uppercase tracking-widest text-slate-500 dark:text-white/40 font-medium ml-1 transition-colors duration-500">Fecha de Vencimiento</label>
+                    <label className="text-xs uppercase tracking-widest text-slate-700 dark:text-white/80 font-medium ml-1 transition-colors duration-500">Fecha de Vencimiento</label>
                     <div className="relative">
                       <input
                         type="date"
@@ -510,7 +510,7 @@ export default function Pagos() {
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  <label className="text-xs uppercase tracking-widest text-slate-500 dark:text-white/40 font-medium ml-1 transition-colors duration-500">Método de Pago</label>
+                  <label className="text-xs uppercase tracking-widest text-slate-700 dark:text-white/80 font-medium ml-1 transition-colors duration-500">Método de Pago</label>
                   <select
                     name="metodo_pago"
                     value={formData.metodo_pago}
@@ -557,7 +557,7 @@ export default function Pagos() {
               </div>
               <div>
                 <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2 transition-all duration-300 ease-in-out">¿Eliminar pago?</h3>
-                <p className="text-sm text-slate-500 dark:text-white/50 transition-all duration-300 ease-in-out">Esta acción no se puede deshacer. Los datos se borrarán permanentemente.</p>
+                <p className="text-sm text-slate-700 dark:text-white/80 transition-all duration-300 ease-in-out">Esta acción no se puede deshacer. Los datos se borrarán permanentemente.</p>
               </div>
               <div className="flex items-center gap-3 mt-2">
                 <button
