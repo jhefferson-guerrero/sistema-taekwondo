@@ -7,6 +7,7 @@ import Asistencia from './pages/Asistencia';
 import ProtectedRoute from './components/ProtectedRoute';
 import Horarios from './pages/Horarios';
 import Cinturones from './pages/Cinturones';
+import Profesores from './pages/Profesores';
 
 import DashboardLayout from './components/DashboardLayout';
 
@@ -27,6 +28,7 @@ function App() {
                 <Route path="asistencia" element={<Asistencia />} />
                 <Route path="horarios" element={<Horarios />} />
                 <Route path="cinturones" element={<Cinturones />} />
+                <Route path="profesores" element={<Profesores />} />
                 <Route path="*" element={<Dashboard />} /> {/* Fallback temporary */}
               </Routes>
             </DashboardLayout>
