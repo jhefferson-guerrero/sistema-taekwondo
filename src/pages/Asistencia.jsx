@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { supabase } from '../services/supabaseClient';
+import { DISCIPLINAS, getGradosByDisciplina } from '../utils/constants';
 import { Search, Filter, CalendarCheck, Clock, User, CheckCircle, XCircle, AlertCircle, Plus, ChevronLeft, ChevronRight, Loader2, Users, Calendar, Check, X } from 'lucide-react';
 import { calcularClasesRestantes } from '../utils/membresiaUtils';
 import Pagination from '../components/Pagination';
@@ -21,6 +22,8 @@ export default function Asistencia() {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [beltFilter, setBeltFilter] = useState('Todos');
+  const [disciplinaFilter, setDisciplinaFilter] = useState('Todos');
+  const cinturones = getGradosByDisciplina(disciplinaFilter === 'Todos' ? 'Taekwondo' : disciplinaFilter);
   
   const [selectedDate, setSelectedDate] = useState(getLocalDateString());
   
@@ -46,7 +49,7 @@ export default function Asistencia() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, beltFilter, selectedDate]);
+  }, [searchTerm, beltFilter, selectedDate, disciplinaFilter]);
 
   const fetchData = async () => {
     try {
@@ -186,13 +189,15 @@ export default function Asistencia() {
     }
   };
 
-  const cinturones = ['Blanco', 'Amarillo', 'Verde', 'Azul', 'Rojo', 'Negro'];
+
 
   const filteredAlumnos = alumnos.filter(alumno => {
     const full = `${alumno.nombre} ${alumno.apellidos}`.toLowerCase();
     const matchesSearch = full.includes(searchTerm.toLowerCase());
     const matchesBelt = beltFilter === 'Todos' || alumno.cinturon === beltFilter;
-    return matchesSearch && matchesBelt;
+    const matchDisciplina = disciplinaFilter === 'Todos' || alumno.disciplina === disciplinaFilter;
+
+    return matchesSearch && matchesBelt && matchDisciplina;
   });
 
   const totalPages = Math.ceil(filteredAlumnos.length / itemsPerPage);
@@ -256,6 +261,18 @@ export default function Asistencia() {
             />
           </div>
 
+          <div className="relative w-full sm:w-48 group/filter">
+            <select
+              value={disciplinaFilter}
+              onChange={(e) => { setDisciplinaFilter(e.target.value); setBeltFilter('Todos'); }}
+              className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl py-3 px-4 focus:outline-none focus:border-red-600 dark:focus:border-red-500 transition-all duration-300 ease-in-out shadow-sm appearance-none"
+            >
+              <option value="Todos">Todas las disciplinas</option>
+              {DISCIPLINAS.map(d => (
+                <option key={d} value={d}>{d}</option>
+              ))}
+            </select>
+          </div>
           <div className="relative w-full sm:w-56 group/filter">
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
               <Filter className="w-4 h-4 text-slate-400 group-focus-within/filter:text-red-600 dark:text-white/40 dark:group-focus-within/filter:text-red-500 transition-all duration-300 ease-in-out" />
@@ -265,7 +282,7 @@ export default function Asistencia() {
               onChange={(e) => setBeltFilter(e.target.value)}
               className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl py-3 pl-11 pr-4 focus:outline-none focus:border-red-600 dark:focus:border-red-500 transition-all duration-300 ease-in-out shadow-sm appearance-none"
             >
-              <option value="Todos">Todos los cinturones</option>
+              <option value="Todos">Todos los grados</option>
               {cinturones.map(c => (
                 <option key={c} value={c}>{c}</option>
               ))}
@@ -312,7 +329,15 @@ export default function Asistencia() {
                     return (
                       <tr key={alumno.id} className="hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-all duration-300 ease-in-out group">
                         <td className="px-8 py-5">
+                        <div className="flex flex-col">
                           <div className="font-semibold text-slate-900 dark:text-white transition-colors duration-300">{alumno.nombre} {alumno.apellidos}</div>
+                          <div className="flex items-center gap-1.5 mt-1">
+                            <span className={`w-1.5 h-1.5 rounded-full ${(alumno.disciplina || 'Taekwondo') === 'Muay Thai' ? 'bg-red-500' : 'bg-blue-500'}`}></span>
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+                              {alumno.disciplina || 'Taekwondo'}
+                            </span>
+                          </div>
+                        </div>
                         </td>
                         <td className="px-8 py-5 text-center">
                           <span className="inline-flex items-center px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-xs font-bold text-slate-800 group-hover:border-slate-300 dark:bg-white/10 dark:border-white/10 dark:text-white dark:group-hover:border-white/20 transition-all duration-300 ease-in-out">

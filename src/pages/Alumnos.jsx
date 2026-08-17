@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { supabase } from '../services/supabaseClient';
+import { DISCIPLINAS, getGradosByDisciplina } from '../utils/constants';
 import { Plus, Users, X, Loader2, Calendar, Edit2, Trash2, AlertCircle, Search, Filter, Eye, ChevronLeft, ChevronRight, Snowflake, Sun, RefreshCcw } from 'lucide-react';
 import { calcularClasesRestantes, FERIADOS_PERU } from '../utils/membresiaUtils';
 import Pagination from '../components/Pagination';
@@ -15,6 +16,8 @@ export default function Alumnos() {
   const [deleting, setDeleting] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [beltFilter, setBeltFilter] = useState('Todos');
+  const [disciplinaFilter, setDisciplinaFilter] = useState('Todos');
+  const cinturones = getGradosByDisciplina(disciplinaFilter === 'Todos' ? 'Taekwondo' : disciplinaFilter);
   const [statusFilter, setStatusFilter] = useState('Activo');
   const [horariosDisponibles, setHorariosDisponibles] = useState([]);
 
@@ -172,7 +175,7 @@ export default function Alumnos() {
 
       // Close modal, clear form, refresh data
       setIsModalOpen(false);
-      setFormData({ nombre: '', apellidos: '', telefono_padres: '', cinturon: 'Blanco', horario_id: '' });
+      setFormData({ nombre: '', apellidos: '', telefono_padres: '', disciplina: 'Taekwondo', cinturon: 'Blanco', horario_id: '' });
       setEditId(null);
       await fetchAlumnos();
     } catch (error) {
@@ -341,7 +344,7 @@ export default function Alumnos() {
 
   const openNewModal = () => {
     setEditId(null);
-    setFormData({ nombre: '', apellidos: '', telefono_padres: '', cinturon: 'Blanco', horario_id: '' });
+    setFormData({ nombre: '', apellidos: '', telefono_padres: '', disciplina: 'Taekwondo', cinturon: 'Blanco', horario_id: '' });
     setIsModalOpen(true);
   };
 
@@ -351,6 +354,7 @@ export default function Alumnos() {
       nombre: alumno.nombre,
       apellidos: alumno.apellidos,
       telefono_padres: alumno.telefono_padres,
+      disciplina: alumno.disciplina || 'Taekwondo',
       cinturon: alumno.cinturon,
       horario_id: alumno.horario_id || ''
     });
@@ -496,7 +500,7 @@ export default function Alumnos() {
     }
   };
 
-  const cinturones = ['Blanco', 'Amarillo', 'Verde', 'Azul', 'Rojo', 'Negro'];
+
 
   // Derived state for filtering
   const filteredAlumnos = alumnos.filter(alumno => {
@@ -509,7 +513,9 @@ export default function Alumnos() {
     const estadoActual = alumno.estado || 'Activo';
     const matchesStatus = estadoActual === statusFilter;
 
-    return matchesSearch && matchesBelt && matchesStatus;
+    const matchesDisciplina = disciplinaFilter === 'Todos' || alumno.disciplina === disciplinaFilter;
+
+    return matchesSearch && matchesBelt && matchesStatus && matchesDisciplina;
   });
 
   const totalPages = Math.ceil(filteredAlumnos.length / itemsPerPage);
@@ -574,6 +580,19 @@ export default function Alumnos() {
             />
           </div>
 
+          <div className="relative w-full sm:w-48 group/filter">
+            <select
+              value={disciplinaFilter}
+              onChange={(e) => { setDisciplinaFilter(e.target.value); setBeltFilter('Todos'); }}
+              className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl py-3 px-4 focus:outline-none focus:border-red-600 dark:focus:border-red-500 transition-all duration-300 ease-in-out shadow-sm appearance-none"
+            >
+              <option value="Todos">Todas las disciplinas</option>
+              {DISCIPLINAS.map(d => (
+                <option key={d} value={d}>{d}</option>
+              ))}
+            </select>
+          </div>
+
           <div className="relative w-full sm:w-56 group/filter">
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
               <Filter className="w-4 h-4 text-slate-400 group-focus-within/filter:text-red-600 dark:text-white/40 dark:group-focus-within/filter:text-red-500 transition-all duration-300 ease-in-out" />
@@ -583,7 +602,7 @@ export default function Alumnos() {
               onChange={(e) => setBeltFilter(e.target.value)}
               className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl py-3 pl-11 pr-4 focus:outline-none focus:border-red-600 dark:focus:border-red-500 transition-all duration-300 ease-in-out shadow-sm appearance-none"
             >
-              <option value="Todos">Todos los cinturones</option>
+              <option value="Todos">Todos los grados</option>
               {cinturones.map(c => (
                 <option key={c} value={c}>{c}</option>
               ))}
@@ -619,7 +638,7 @@ export default function Alumnos() {
                   <tr className="border-b border-slate-200 dark:border-white/10 transition-colors duration-500">
                     <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-700 dark:text-white/80">Nombre Completo</th>
                     <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-700 dark:text-white/80">Teléfono</th>
-                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-700 dark:text-white/80">Cinturón</th>
+                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-700 dark:text-white/80">Grado</th>
                     <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-700 dark:text-white/80">Horario</th>
                     <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-700 dark:text-white/80">Registro</th>
                     <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-700 dark:text-white/80 text-center">Estado Pago</th>
@@ -630,7 +649,15 @@ export default function Alumnos() {
                   {currentAlumnos.map((alumno) => (
                     <tr key={alumno.id} className="hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-all duration-300 ease-in-out group">
                       <td className="px-8 py-5">
-                        <div className="font-semibold text-slate-900 dark:text-white transition-colors duration-300">{alumno.nombre} {alumno.apellidos}</div>
+                        <div className="flex flex-col">
+                          <div className="font-semibold text-slate-900 dark:text-white transition-colors duration-300">{alumno.nombre} {alumno.apellidos}</div>
+                          <div className="flex items-center gap-1.5 mt-1">
+                            <span className={`w-1.5 h-1.5 rounded-full ${(alumno.disciplina || 'Taekwondo') === 'Muay Thai' ? 'bg-red-500' : 'bg-blue-500'}`}></span>
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+                              {alumno.disciplina || 'Taekwondo'}
+                            </span>
+                          </div>
+                        </div>
                       </td>
                       <td className="px-8 py-5">
                         <div className="font-medium text-slate-700 dark:text-white/90 transition-colors duration-300">{alumno.telefono_padres}</div>
@@ -817,7 +844,24 @@ export default function Alumnos() {
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  <label className="text-xs uppercase tracking-widest text-slate-700 dark:text-white/80 font-medium ml-1 transition-colors duration-500">Cinturón Actual</label>
+                  <label className="text-xs uppercase tracking-widest text-slate-700 dark:text-white/80 font-medium ml-1 transition-colors duration-500">Disciplina</label>
+                  <select
+                    name="disciplina"
+                    value={formData.disciplina}
+                    onChange={(e) => {
+                      const newDisc = e.target.value;
+                      const newGrados = getGradosByDisciplina(newDisc);
+                      setFormData({ ...formData, disciplina: newDisc, cinturon: newGrados[0] });
+                    }}
+                    disabled={saving}
+                    className="w-full mb-4 bg-slate-50 border border-slate-200 text-slate-900 dark:bg-slate-800 dark:border-white/10 dark:text-white rounded-xl px-4 py-3 focus:outline-none focus:border-red-500 transition-all duration-300 ease-in-out disabled:opacity-50 appearance-none"
+                  >
+                    {DISCIPLINAS.map(d => (
+                      <option key={d} value={d}>{d}</option>
+                    ))}
+                  </select>
+
+                  <label className="text-xs uppercase tracking-widest text-slate-700 dark:text-white/80 font-medium ml-1 transition-colors duration-500">Grado Actual</label>
                   <select
                     name="cinturon"
                     value={formData.cinturon}
@@ -825,7 +869,7 @@ export default function Alumnos() {
                     disabled={saving}
                     className="w-full bg-slate-50 border border-slate-200 text-slate-900 dark:bg-slate-800 dark:border-white/10 dark:text-white rounded-xl px-4 py-3 focus:outline-none focus:border-red-500 transition-all duration-300 ease-in-out disabled:opacity-50 appearance-none"
                   >
-                    {cinturones.map(c => (
+                    {getGradosByDisciplina(formData.disciplina || 'Taekwondo').map(c => (
                       <option key={c} value={c}>{c}</option>
                     ))}
                   </select>

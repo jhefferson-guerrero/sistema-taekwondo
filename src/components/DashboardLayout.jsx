@@ -21,7 +21,7 @@ const navItems = [
   { name: 'Inicio', path: '/dashboard', icon: Home },
   { name: 'Alumnos', path: '/dashboard/alumnos', icon: Users },
   { name: 'Pagos', path: '/dashboard/pagos', icon: CreditCard },
-  { name: 'Cinturones y Ascensos', path: '/dashboard/cinturones', icon: Award },
+  { name: 'Grados y Ascensos', path: '/dashboard/cinturones', icon: Award },
   { name: 'Asistencia', path: '/dashboard/asistencia', icon: CalendarCheck },
   { name: 'Horarios', path: '/dashboard/horarios', icon: Clock },
 ];

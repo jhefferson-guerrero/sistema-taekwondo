@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { supabase } from '../services/supabaseClient';
+import { DISCIPLINAS } from '../utils/constants';
 import { Search, Filter, Plus, Minus, X, Calendar, DollarSign, CreditCard, CheckCircle, XCircle, ArrowRight, Clock, FileText, User, Receipt, Edit2, Trash2, Loader2, AlertCircle } from 'lucide-react';
 import Pagination from '../components/Pagination';
 
@@ -27,6 +28,7 @@ export default function Pagos() {
   const [deleting, setDeleting] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [metodoFilter, setMetodoFilter] = useState('Todos');
+  const [disciplinaFilter, setDisciplinaFilter] = useState('Todos');
 
   // Form State
   const [formData, setFormData] = useState({
@@ -50,7 +52,7 @@ export default function Pagos() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, metodoFilter]);
+  }, [searchTerm, metodoFilter, disciplinaFilter]);
 
   const fetchData = async () => {
     try {
@@ -61,7 +63,8 @@ export default function Pagos() {
           *,
           alumnos (
             nombre,
-            apellidos
+            apellidos,
+            disciplina
           )
         `)
         .order('fecha_pago', { ascending: false });
@@ -71,7 +74,7 @@ export default function Pagos() {
 
       const { data: alumnosData, error: alumnosError } = await supabase
         .from('alumnos')
-        .select('id, nombre, apellidos, estado')
+        .select('id, nombre, apellidos, estado, disciplina')
         .order('nombre', { ascending: true });
 
       if (alumnosError) throw alumnosError;
@@ -202,13 +205,16 @@ export default function Pagos() {
     const alumnoNombreCompleto = `${pago.alumnos?.nombre || ''} ${pago.alumnos?.apellidos || ''}`.toLowerCase();
     const matchesSearch = alumnoNombreCompleto.includes(searchTerm.toLowerCase());
     const matchesMetodo = metodoFilter === 'Todos' || pago.metodo_pago === metodoFilter;
+    const matchDisciplina = disciplinaFilter === 'Todos' || (pago.alumnos && pago.alumnos.disciplina === disciplinaFilter);
 
-    return matchesSearch && matchesMetodo;
+    return matchesSearch && matchesMetodo && matchDisciplina;
   });
 
   const filteredAlumnosDropdown = alumnos.filter(a => {
     const full = `${a.nombre} ${a.apellidos}`.toLowerCase();
-    return full.includes(alumnoSearchTerm.toLowerCase());
+    const matchSearch = full.includes(alumnoSearchTerm.toLowerCase());
+    const matchDisciplina = disciplinaFilter === 'Todos' || a.disciplina === disciplinaFilter;
+    return matchSearch && matchDisciplina;
   });
 
   const totalPages = Math.ceil(filteredPagos.length / itemsPerPage);
@@ -257,6 +263,18 @@ export default function Pagos() {
             />
           </div>
 
+          <div className="relative w-full sm:w-48 group/filter">
+            <select
+              value={disciplinaFilter}
+              onChange={(e) => setDisciplinaFilter(e.target.value)}
+              className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl py-3 px-4 focus:outline-none focus:border-red-600 dark:focus:border-red-500 transition-all duration-300 ease-in-out shadow-sm appearance-none"
+            >
+              <option value="Todos">Todas las disciplinas</option>
+              {DISCIPLINAS.map(d => (
+                <option key={d} value={d}>{d}</option>
+              ))}
+            </select>
+          </div>
           <div className="relative w-full sm:w-56 group/filter">
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
               <Filter className="w-4 h-4 text-slate-400 group-focus-within/filter:text-red-600 dark:text-white/40 dark:group-focus-within/filter:text-red-500 transition-all duration-300 ease-in-out" />
@@ -313,7 +331,15 @@ export default function Pagos() {
                   {currentPagos.map((pago) => (
                     <tr key={pago.id} className="hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-all duration-300 ease-in-out group">
                       <td className="px-8 py-5">
-                        <div className="font-semibold text-slate-900 dark:text-white transition-colors duration-300">{pago.alumnos?.nombre} {pago.alumnos?.apellidos}</div>
+                        <div className="flex flex-col">
+                          <div className="font-semibold text-slate-900 dark:text-white transition-colors duration-300">{pago.alumnos?.nombre} {pago.alumnos?.apellidos}</div>
+                          <div className="flex items-center gap-1.5 mt-1">
+                            <span className={`w-1.5 h-1.5 rounded-full ${(pago.alumnos?.disciplina || 'Taekwondo') === 'Muay Thai' ? 'bg-red-500' : 'bg-blue-500'}`}></span>
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+                              {pago.alumnos?.disciplina || 'Taekwondo'}
+                            </span>
+                          </div>
+                        </div>
                       </td>
                       <td className="px-8 py-5 text-center">
                         <div className="font-medium text-slate-700 dark:text-white/90 transition-colors duration-300 text-emerald-600 dark:text-red-500">
