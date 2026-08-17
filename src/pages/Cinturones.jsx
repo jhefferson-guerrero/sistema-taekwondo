@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { supabase } from '../services/supabaseClient';
 import { Search, Filter, Award, Loader2, X, Users, History, ArrowUpCircle, Trash2, AlertCircle } from 'lucide-react';
 import Pagination from '../components/Pagination';
+import { getGradosByDisciplina, DISCIPLINAS } from '../utils/constants';
 
 export default function Cinturones() {
   const [alumnos, setAlumnos] = useState([]);
@@ -11,6 +12,7 @@ export default function Cinturones() {
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
   const [beltFilter, setBeltFilter] = useState('Todos');
+  const [disciplinaFilter, setDisciplinaFilter] = useState('Todos');
 
   // Modal states
   const [isAscensoModalOpen, setIsAscensoModalOpen] = useState(false);
@@ -27,7 +29,7 @@ export default function Cinturones() {
   });
   const [saving, setSaving] = useState(false);
 
-  const cinturones = ['Blanco', 'Punta Amarilla', 'Amarillo', 'Punta Verde', 'Verde', 'Punta Azul', 'Azul', 'Punta Roja', 'Rojo', 'Punta Negra', 'Negro'];
+  const cinturonesList = getGradosByDisciplina(disciplinaFilter === 'Todos' ? 'Taekwondo' : disciplinaFilter);
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
@@ -39,7 +41,7 @@ export default function Cinturones() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, beltFilter]);
+  }, [searchTerm, beltFilter, disciplinaFilter]);
 
   const fetchData = async () => {
     try {
@@ -102,9 +104,10 @@ export default function Cinturones() {
     setSelectedAlumno(alumno);
 
     // Sugerir el siguiente cinturón
-    const currentIndex = cinturones.indexOf(alumno.cinturon);
-    const sugerido = currentIndex !== -1 && currentIndex < cinturones.length - 1
-      ? cinturones[currentIndex + 1]
+    const gradosAlumno = getGradosByDisciplina(alumno.disciplina || 'Taekwondo');
+    const currentIndex = gradosAlumno.indexOf(alumno.cinturon);
+    const sugerido = currentIndex !== -1 && currentIndex < gradosAlumno.length - 1
+      ? gradosAlumno[currentIndex + 1]
       : alumno.cinturon;
 
     setFormData({
@@ -173,7 +176,7 @@ export default function Cinturones() {
 
       // 2. Determinar el cinturón correcto (el examen más reciente que quede, o Blanco si no hay más)
       const examenesRestantes = selectedAlumno.historial.filter(h => h.id !== deleteAscensoRegistro.id);
-      let cinturonCorrecto = 'Blanco';
+      let cinturonCorrecto = getGradosByDisciplina(selectedAlumno.disciplina)[0];
       if (examenesRestantes.length > 0) {
         cinturonCorrecto = examenesRestantes[0].cinturon_nuevo;
       }
@@ -196,7 +199,7 @@ export default function Cinturones() {
         const newHistorial = prev.historial.filter(h => h.id !== deleteAscensoRegistro.id);
         return {
           ...prev,
-          cinturon: examenesRestantes.length > 0 ? examenesRestantes[0].cinturon_nuevo : 'Blanco',
+          cinturon: examenesRestantes.length > 0 ? examenesRestantes[0].cinturon_nuevo : getGradosByDisciplina(prev.disciplina)[0],
           historial: newHistorial
         };
       });
@@ -210,13 +213,14 @@ export default function Cinturones() {
   };
 
   const filteredAlumnos = alumnos.filter(alumno => {
+    const matchesDisciplina = disciplinaFilter === 'Todos' || alumno.disciplina === disciplinaFilter;
     const matchesSearch =
       alumno.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
       alumno.apellidos.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesBelt = beltFilter === 'Todos' || alumno.cinturon === beltFilter;
 
-    return matchesSearch && matchesBelt;
+    return matchesDisciplina && matchesSearch && matchesBelt;
   });
 
   const totalPages = Math.ceil(filteredAlumnos.length / itemsPerPage);
@@ -255,6 +259,18 @@ export default function Cinturones() {
             />
           </div>
 
+          <div className="relative w-full sm:w-48 group/filter">
+            <select
+              value={disciplinaFilter}
+              onChange={(e) => { setDisciplinaFilter(e.target.value); setBeltFilter('Todos'); }}
+              className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl py-3 px-4 focus:outline-none focus:border-red-600 dark:focus:border-red-500 transition-all duration-300 ease-in-out shadow-sm appearance-none"
+            >
+              <option value="Todos">Todas las disciplinas</option>
+              {DISCIPLINAS.map(d => (
+                <option key={d} value={d}>{d}</option>
+              ))}
+            </select>
+          </div>
           <div className="relative w-full sm:w-56 group/filter">
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
               <Filter className="w-4 h-4 text-slate-400 group-focus-within/filter:text-red-600 dark:text-white/40 dark:group-focus-within/filter:text-red-500 transition-all duration-300 ease-in-out" />
@@ -264,8 +280,8 @@ export default function Cinturones() {
               onChange={(e) => setBeltFilter(e.target.value)}
               className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl py-3 pl-11 pr-4 focus:outline-none focus:border-red-600 dark:focus:border-red-500 transition-all duration-300 ease-in-out shadow-sm appearance-none"
             >
-              <option value="Todos">Todos los cinturones</option>
-              {cinturones.map(c => (
+              <option value="Todos">Todos los grados</option>
+              {cinturonesList.map(c => (
                 <option key={c} value={c}>{c}</option>
               ))}
             </select>
@@ -297,7 +313,7 @@ export default function Cinturones() {
                 <thead>
                   <tr className="border-b border-slate-200 dark:border-white/10 transition-colors duration-500">
                     <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-700 dark:text-white/80">Alumno</th>
-                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-700 dark:text-white/80 text-center">Cinturón Actual</th>
+                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-700 dark:text-white/80 text-center">Grado Actual</th>
                     <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-700 dark:text-white/80 text-center">Clases Acumuladas</th>
                     <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-700 dark:text-white/80 text-center">Clases Totales</th>
                     <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-700 dark:text-white/80 text-center">Acciones</th>
@@ -307,7 +323,15 @@ export default function Cinturones() {
                   {currentAlumnos.map((alumno) => (
                     <tr key={alumno.id} className="hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-all duration-300 ease-in-out group">
                       <td className="px-8 py-5">
-                        <div className="font-semibold text-slate-900 dark:text-white transition-colors duration-300">{alumno.nombre} {alumno.apellidos}</div>
+                        <div className="flex flex-col">
+                          <div className="font-semibold text-slate-900 dark:text-white transition-colors duration-300">{alumno.nombre} {alumno.apellidos}</div>
+                          <div className="flex items-center gap-1.5 mt-1">
+                            <span className={`w-1.5 h-1.5 rounded-full ${(alumno.disciplina || 'Taekwondo') === 'Muay Thai' ? 'bg-red-500' : 'bg-blue-500'}`}></span>
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+                              {alumno.disciplina || 'Taekwondo'}
+                            </span>
+                          </div>
+                        </div>
                       </td>
                       <td className="px-8 py-5 text-center">
                         <span className="inline-flex items-center px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-xs font-bold text-slate-800 group-hover:border-slate-300 dark:bg-white/10 dark:border-white/10 dark:text-white dark:group-hover:border-white/20 transition-all duration-300 ease-in-out">
@@ -392,7 +416,7 @@ export default function Cinturones() {
 
               <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 dark:bg-white/5 dark:border-white/10 flex justify-between items-center">
                 <div className="flex flex-col">
-                  <span className="text-xs text-slate-700 dark:text-white/80 uppercase tracking-widest font-semibold mb-1">Cinturón Actual</span>
+                  <span className="text-xs text-slate-700 dark:text-white/80 uppercase tracking-widest font-semibold mb-1">Grado Actual</span>
                   <span className="font-bold text-slate-900 dark:text-white">{selectedAlumno.cinturon}</span>
                 </div>
                 <ArrowUpCircle className="w-5 h-5 text-slate-400 dark:text-white/30" />
@@ -404,7 +428,7 @@ export default function Cinturones() {
 
               <form onSubmit={handleSubmitAscenso} className="flex flex-col gap-5">
                 <div className="flex flex-col gap-2">
-                  <label className="text-xs uppercase tracking-widest text-slate-700 dark:text-white/80 font-medium ml-1 transition-colors duration-500">Nuevo Cinturón</label>
+                  <label className="text-xs uppercase tracking-widest text-slate-700 dark:text-white/80 font-medium ml-1 transition-colors duration-500">Nuevo Grado</label>
                   <select
                     name="cinturon_nuevo"
                     value={formData.cinturon_nuevo}
@@ -413,8 +437,8 @@ export default function Cinturones() {
                     required
                     className="w-full bg-slate-50 border border-slate-200 text-slate-900 dark:bg-slate-800 dark:border-white/10 dark:text-white rounded-xl px-4 py-3 focus:outline-none focus:border-red-500 transition-all duration-300 ease-in-out disabled:opacity-50 appearance-none"
                   >
-                    <option value="" disabled>Selecciona el nuevo cinturón</option>
-                    {cinturones.map(c => (
+                    <option value="" disabled>Selecciona el nuevo grado</option>
+                    {getGradosByDisciplina(selectedAlumno?.disciplina || 'Taekwondo').map(c => (
                       <option key={c} value={c}>{c}</option>
                     ))}
                   </select>
@@ -515,7 +539,7 @@ export default function Cinturones() {
                           </div>
                           <div className="flex items-center gap-3">
                             <span className="text-sm font-semibold text-slate-900 dark:text-white/90 bg-slate-100 dark:bg-white/5 px-3 py-1 rounded-full w-fit">
-                              {new Date(registro.fecha_examen).toLocaleDateString()}
+                              {new Date(registro.fecha_examen + 'T00:00:00').toLocaleDateString()}
                             </span>
                             {idx === 0 && (
                               <button
