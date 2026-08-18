@@ -97,3 +97,11 @@ input:-webkit-autofill:active {
   background-color: #A31E2D4D; /* Rojo Fertex claro al 30% */
   color: inherit;
 }
+
+/* ===== FIX RECHARTS FOCUS OUTLINE ===== */
+.recharts-wrapper,
+.recharts-surface,
+.recharts-wrapper:focus,
+.recharts-surface:focus {
+  outline: none !important;
+}

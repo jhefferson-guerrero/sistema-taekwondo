@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { supabase } from '../services/supabaseClient';
 import { DISCIPLINAS } from '../utils/constants';
-import { Search, Filter, Plus, Minus, X, Calendar, DollarSign, CreditCard, CheckCircle, XCircle, ArrowRight, Clock, FileText, User, Receipt, Edit2, Trash2, Loader2, AlertCircle } from 'lucide-react';
+import { Search, Filter, Plus, Minus, X, Calendar, DollarSign, CreditCard, CheckCircle, XCircle, ArrowRight, Clock, FileText, User, Receipt, Edit2, Trash2, Loader2, AlertCircle, Activity } from 'lucide-react';
 import Pagination from '../components/Pagination';
 
 const getTodayStr = () => {
@@ -263,11 +263,14 @@ export default function Pagos() {
             />
           </div>
 
-          <div className="relative w-full sm:w-48 group/filter">
+          <div className="relative w-full sm:w-60 group/filter">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <Activity className="w-4 h-4 text-slate-400 group-focus-within/filter:text-red-600 dark:text-white/40 dark:group-focus-within/filter:text-red-500 transition-all duration-300 ease-in-out" />
+            </div>
             <select
               value={disciplinaFilter}
               onChange={(e) => setDisciplinaFilter(e.target.value)}
-              className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl py-3 px-4 focus:outline-none focus:border-red-600 dark:focus:border-red-500 transition-all duration-300 ease-in-out shadow-sm appearance-none"
+              className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl py-3 pl-11 pr-4 focus:outline-none focus:border-red-600 dark:focus:border-red-500 transition-all duration-300 ease-in-out shadow-sm appearance-none"
             >
               <option value="Todos">Todas las disciplinas</option>
               {DISCIPLINAS.map(d => (

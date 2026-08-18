@@ -64,3 +64,35 @@ export const calcularClasesRestantes = (fechaInicio, fechaVencimiento, diasHorar
 
   return count;
 };
+
+/**
+ * Calcula el total de clases en un rango de fechas estricto, ignorando feriados.
+ */
+export const calcularClasesEnRango = (fechaInicio, fechaFin, diasHorario = []) => {
+  if (!fechaInicio || !fechaFin || !diasHorario || diasHorario.length === 0) return 0;
+
+  const startParam = new Date(`${fechaInicio}T00:00:00`); 
+  const endParam = new Date(`${fechaFin}T23:59:59`); 
+  
+  if (startParam > endParam) return 0;
+
+  let currentDate = new Date(startParam);
+  let count = 0;
+
+  while (currentDate <= endParam) {
+    const dayName = diasSemana[currentDate.getDay()];
+    
+    if (diasHorario.includes(dayName)) {
+      const mm = String(currentDate.getMonth() + 1).padStart(2, '0');
+      const dd = String(currentDate.getDate()).padStart(2, '0');
+      const dateKey = `${mm}-${dd}`;
+      
+      if (!FERIADOS_PERU.includes(dateKey)) {
+        count++;
+      }
+    }
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+
+  return count;
+};

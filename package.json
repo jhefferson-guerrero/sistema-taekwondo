@@ -10,11 +10,15 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@marsidev/react-turnstile": "^1.6.0",
     "@supabase/supabase-js": "^2.112.3",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.8",
     "lucide-react": "^1.31.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-router-dom": "^7.18.2",
+    "recharts": "^3.10.1",
     "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
