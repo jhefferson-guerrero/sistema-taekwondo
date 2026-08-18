@@ -637,10 +637,10 @@ export default function Alumnos() {
                 <thead>
                   <tr className="border-b border-slate-200 dark:border-white/10 transition-colors duration-500">
                     <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-700 dark:text-white/80">Nombre Completo</th>
-                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-700 dark:text-white/80">Teléfono</th>
-                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-700 dark:text-white/80">Grado</th>
-                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-700 dark:text-white/80">Horario</th>
-                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-700 dark:text-white/80">Registro</th>
+                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-700 dark:text-white/80 text-center">Teléfono</th>
+                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-700 dark:text-white/80 text-center">Grado</th>
+                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-700 dark:text-white/80 text-center">Horario</th>
+                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-700 dark:text-white/80 text-center">Registro</th>
                     <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-700 dark:text-white/80 text-center">Estado Pago</th>
                     <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-700 dark:text-white/80 text-center">Acciones</th>
                   </tr>
@@ -659,20 +659,20 @@ export default function Alumnos() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-8 py-5">
+                      <td className="px-8 py-5 text-center">
                         <div className="font-medium text-slate-700 dark:text-white/90 transition-colors duration-300">{alumno.telefono_padres}</div>
                       </td>
-                      <td className="px-8 py-5">
+                      <td className="px-8 py-5 text-center">
                         <span className="inline-flex items-center px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-xs font-bold text-slate-800 group-hover:border-slate-300 dark:bg-white/10 dark:border-white/10 dark:text-white dark:group-hover:border-white/20 transition-all duration-300 ease-in-out">
                           {alumno.cinturon}
                         </span>
                       </td>
-                      <td className="px-8 py-5">
+                      <td className="px-8 py-5 text-center">
                         <div className="font-medium text-slate-700 dark:text-white/90 transition-colors duration-300">
                           {alumno.horarios?.nombre || '-'}
                         </div>
                       </td>
-                      <td className="px-8 py-5">
+                      <td className="px-8 py-5 text-center">
                         <div className="inline-flex items-center gap-2 text-slate-700 dark:text-white/80 text-sm">
                           <Calendar className="w-4 h-4 opacity-50" />
                           {new Date(alumno.fecha_registro).toLocaleDateString()}

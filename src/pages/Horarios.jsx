@@ -473,7 +473,7 @@ export default function Horarios() {
                     value={formData.profesor_id}
                     onChange={handleInputChange}
                     disabled={saving}
-                    className="w-full bg-slate-50 border border-slate-200 text-slate-900 focus:bg-white dark:bg-slate-800 dark:focus:bg-slate-800 dark:border-white/10 dark:text-white rounded-xl px-4 py-3 focus:outline-none focus:border-red-500 transition-colors duration-300"
+                    className="w-full appearance-none bg-slate-50 border border-slate-200 text-slate-900 focus:bg-white dark:bg-slate-800 dark:focus:bg-slate-800 dark:border-white/10 dark:text-white rounded-xl px-4 py-3 focus:outline-none focus:border-red-500 transition-colors duration-300"
                   >
                     <option value="" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white">-- Sin Profesor --</option>
                     {profesores.map(p => (

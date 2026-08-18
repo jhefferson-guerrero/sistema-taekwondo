@@ -43,7 +43,7 @@ export default function DashboardLayout({ children }) {
     <div className="flex h-[100dvh] w-full bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white overflow-hidden font-sans relative transition-colors duration-500">
       {/* Sidebar */}
       <aside
-        className={`relative z-20 flex flex-col border-r border-slate-200 dark:border-white/10 bg-white dark:bg-[#0a0a0a] transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] ${isCollapsed ? 'w-20' : 'w-72'
+        className={`relative z-20 flex flex-col border-r border-slate-200 dark:border-white/10 bg-white dark:bg-[#0a0a0a] transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] ${isCollapsed ? 'w-20' : 'w-64'
           }`}
       >
         {/* Header & Toggle */}
@@ -141,7 +141,7 @@ export default function DashboardLayout({ children }) {
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col h-full overflow-hidden">
         <div className="flex-1 overflow-y-auto p-8 lg:p-12" id="main-scroll-container">
-          <div className="max-w-7xl mx-auto">
+          <div className={`mx-auto transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] w-full ${isCollapsed ? 'max-w-[1600px]' : 'max-w-[1440px]'}`}>
             {children}
           </div>
         </div>
