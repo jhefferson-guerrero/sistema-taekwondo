@@ -1,12 +1,16 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { supabase } from '../services/supabaseClient';
-import { Search, Plus, Loader2, Edit2, Trash2, GraduationCap, X, Calendar, Users, Phone, User, MapPin, ChevronRight, ArrowLeft } from 'lucide-react';
+import { Search, Plus, Loader2, Edit2, Trash2, GraduationCap, X, Calendar, Users, Phone, User, MapPin, ChevronRight, ArrowLeft, AlertCircle } from 'lucide-react';
 import { DISCIPLINAS } from '../utils/constants';
 
 export default function Profesores() {
   const [profesores, setProfesores] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  // Filters
   const [searchTerm, setSearchTerm] = useState('');
+  const [disciplinaFilter, setDisciplinaFilter] = useState('Todos');
   
   // Modals
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -22,6 +26,8 @@ export default function Profesores() {
   });
   const [editId, setEditId] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
+  const [deleting, setDeleting] = useState(false);
   
   // Details State
   const [selectedProfesor, setSelectedProfesor] = useState(null);
@@ -127,59 +133,87 @@ export default function Profesores() {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('¿Estás seguro de eliminar este profesor? Los horarios asociados perderán su asignación.')) return;
+  const confirmDelete = (id) => {
+    setDeleteId(id);
+  };
+
+  const handleDelete = async () => {
+    if (!deleteId) return;
     try {
-      const { error } = await supabase.from('profesores').delete().eq('id', id);
+      setDeleting(true);
+      const { error } = await supabase.from('profesores').delete().eq('id', deleteId);
       if (error) throw error;
-      fetchProfesores();
+      setDeleteId(null);
+      await fetchProfesores();
     } catch (err) {
       console.error('Error deleting:', err);
       alert('Error eliminando profesor');
+    } finally {
+      setDeleting(false);
     }
   };
 
   const filteredProfesores = profesores.filter(p => {
     const full = `${p.nombre} ${p.apellidos || ''}`.toLowerCase();
-    return full.includes(searchTerm.toLowerCase());
+    const matchesSearch = full.includes(searchTerm.toLowerCase());
+    const matchesDisciplina = disciplinaFilter === 'Todos' || p.disciplina === disciplinaFilter;
+    return matchesSearch && matchesDisciplina;
   });
 
   return (
     <>
       <div className="flex flex-col gap-8">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-red-100 dark:bg-white/10 rounded-2xl flex items-center justify-center">
-              <GraduationCap className="w-6 h-6 text-red-600 dark:text-white" />
+        {/* Header Section */}
+        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-3">
+              <span className="px-3 py-1 rounded-full bg-slate-200 dark:bg-white/5 border border-slate-300 dark:border-white/10 text-[10px] uppercase tracking-[0.2em] font-medium text-slate-600 dark:text-white/60">
+                Equipo
+              </span>
             </div>
-            <div>
-              <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Profesores</h1>
-              <p className="text-slate-500 dark:text-white/60 text-sm">Gestiona el equipo de instructores</p>
-            </div>
+            <h1 className="text-3xl lg:text-4xl font-bold tracking-tight mt-2 text-slate-900 dark:text-white transition-colors duration-500">
+              Directorio de <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-red-800 dark:from-red-500 dark:to-red-700">Profesores</span>
+            </h1>
           </div>
 
           <button
             onClick={openNewModal}
-            className="flex items-center gap-2 bg-red-600 hover:bg-red-700 dark:bg-white dark:hover:bg-slate-100 dark:text-slate-900 text-white px-5 py-2.5 rounded-xl font-medium transition-all duration-300 shadow-sm shadow-red-600/20 dark:shadow-none hover:shadow-md hover:scale-[1.02] active:scale-[0.98] w-full sm:w-auto justify-center"
+            className="group relative flex items-center justify-between bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-black px-6 py-3 rounded-full font-medium dark:hover:bg-gray-100 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98] shrink-0"
           >
-            <Plus className="w-5 h-5" />
-            Nuevo Profesor
+            <span className="relative z-10 pr-4">Nuevo Profesor</span>
+            <div className="relative z-10 w-8 h-8 rounded-full bg-white/20 group-hover:bg-white/30 dark:bg-slate-800/10 flex items-center justify-center dark:group-hover:bg-black/20 transition-colors duration-500 shrink-0">
+              <Plus className="w-4 h-4 group-hover:scale-110 transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]" strokeWidth={2.5} />
+            </div>
           </button>
-        </div>
+        </header>
 
-        {/* Search */}
-        <div className="relative w-full">
-          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-            <Search className="w-5 h-5 text-slate-400 focus-within:text-red-600 transition-colors" />
+        {/* Toolbar Section */}
+        <div className="flex flex-col sm:flex-row items-center gap-4 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
+          <div className="relative w-full sm:w-96 group/search">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <Search className="w-4 h-4 text-slate-400 group-focus-within/search:text-red-600 dark:text-white/40 dark:group-focus-within/search:text-red-500 transition-colors" />
+            </div>
+            <input
+              type="text"
+              placeholder="Buscar por nombre o apellido..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl py-3 pl-11 pr-4 focus:outline-none focus:border-red-600 dark:focus:border-red-500 transition-all duration-300 ease-in-out shadow-sm"
+            />
           </div>
-          <input
-            type="text"
-            placeholder="Buscar por nombre o apellidos..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl pl-11 pr-4 py-3.5 focus:outline-none focus:border-red-600 dark:focus:border-red-500 focus:ring-1 focus:ring-red-600 dark:focus:ring-red-500 transition-all duration-300 ease-in-out shadow-sm"
-          />
+
+          <div className="relative w-full sm:w-48 group/filter">
+            <select
+              value={disciplinaFilter}
+              onChange={(e) => setDisciplinaFilter(e.target.value)}
+              className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl py-3 px-4 focus:outline-none focus:border-red-600 dark:focus:border-red-500 transition-all duration-300 ease-in-out shadow-sm appearance-none"
+            >
+              <option value="Todos">Todas las disciplinas</option>
+              {DISCIPLINAS.map(d => (
+                <option key={d} value={d}>{d}</option>
+              ))}
+            </select>
+          </div>
         </div>
 
         {/* List */}
@@ -194,28 +228,28 @@ export default function Profesores() {
             <p className="text-slate-500 dark:text-white/60 mt-1">Registra tu primer instructor.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in duration-700">
             {filteredProfesores.map((prof) => (
               <div 
                 key={prof.id} 
                 onClick={() => openDetailsModal(prof)}
-                className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-white/5 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group"
+                className="group relative flex flex-col p-6 bg-white dark:bg-slate-800 border border-slate-300 dark:border-white/20 border-t-[4px] border-t-red-600 dark:border-t-red-600 rounded-[2rem] shadow-[0_12px_40px_-12px_rgba(0,0,0,0.15)] dark:shadow-[0_12px_40px_-12px_rgba(255,255,255,0.05)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.2)] dark:hover:shadow-[0_20px_50px_-12px_rgba(255,255,255,0.08)] overflow-hidden cursor-pointer"
               >
                 <div className="flex justify-between items-start mb-4">
                   <div className="w-12 h-12 bg-slate-100 dark:bg-white/5 rounded-full flex items-center justify-center text-xl font-bold text-slate-700 dark:text-white/80">
                     {prof.nombre.charAt(0)}{prof.apellidos ? prof.apellidos.charAt(0) : ''}
                   </div>
-                  <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
-                    <button onClick={() => openEditModal(prof)} className="p-2 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors bg-slate-50 dark:bg-white/5 rounded-lg">
-                      <Edit2 className="w-4 h-4" />
+                  <div className="flex items-center gap-1 -mr-2 -mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 shrink-0" onClick={e => e.stopPropagation()}>
+                    <button onClick={() => openEditModal(prof)} className="p-2 text-slate-400 hover:text-slate-900 dark:text-white/40 dark:hover:text-white transition-all duration-300 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10" title="Editar">
+                      <Edit2 className="w-[18px] h-[18px] transition-transform duration-300 hover:scale-110" />
                     </button>
-                    <button onClick={() => handleDelete(prof.id)} className="p-2 text-slate-400 hover:text-red-600 dark:hover:text-red-400 transition-colors bg-slate-50 dark:bg-white/5 rounded-lg">
-                      <Trash2 className="w-4 h-4" />
+                    <button onClick={() => confirmDelete(prof.id)} className="p-2 text-slate-400 hover:text-red-600 dark:text-white/40 dark:hover:text-red-500 transition-all duration-300 rounded-lg hover:bg-slate-200 dark:hover:bg-white/10" title="Eliminar">
+                      <Trash2 className="w-[18px] h-[18px] transition-transform duration-300 hover:scale-110" />
                     </button>
                   </div>
                 </div>
                 
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-1 truncate">
                   {prof.nombre} {prof.apellidos}
                 </h3>
                 
@@ -239,80 +273,99 @@ export default function Profesores() {
       </div>
 
       {/* Create/Edit Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 dark:bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200 border border-slate-200 dark:border-white/10">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-white/5">
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-                {editId ? 'Editar Profesor' : 'Nuevo Profesor'}
-              </h2>
-              <button onClick={() => setIsModalOpen(false)} className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-white rounded-xl transition-colors">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+      {isModalOpen && createPortal(
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/40 dark:bg-slate-800/60 backdrop-blur-md transition-all duration-300 ease-in-out" onClick={() => !saving && setIsModalOpen(false)} />
+
+          <div className="relative w-full max-w-md p-1.5 bg-slate-50/80 dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 rounded-[2rem] shadow-xl dark:shadow-2xl animate-in fade-in zoom-in-95 duration-300">
+            <div className="p-8 bg-white dark:bg-slate-800 rounded-[calc(2rem-0.375rem)] shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] flex flex-col gap-6 transition-colors duration-300">
+
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white transition-all duration-300 ease-in-out">
+                  {editId ? 'Editar Profesor' : 'Nuevo Profesor'}
+                </h2>
+                <button
+                  onClick={() => setIsModalOpen(false)}
+                  disabled={saving}
+                  className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-900 dark:bg-white/5 dark:text-white/70 flex items-center justify-center dark:hover:bg-white/10 dark:hover:text-white transition-all duration-300 ease-in-out disabled:opacity-50"
+                >
+                  <X className="w-4 h-4 transition-transform duration-300 hover:rotate-90" />
+                </button>
+              </div>
             
-            <form onSubmit={handleSubmit} className="p-6">
-              <div className="flex flex-col gap-4">
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 dark:text-white/90 mb-1.5">Nombre <span className="text-red-500">*</span></label>
-                  <input type="text" name="nombre" required value={formData.nombre} onChange={handleInputChange} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-red-500" />
+              <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+                <div className="flex flex-col gap-2">
+                  <label className="text-xs uppercase tracking-widest text-slate-700 dark:text-white/80 font-medium ml-1">Nombre <span className="text-red-500">*</span></label>
+                  <input type="text" name="nombre" required disabled={saving} value={formData.nombre} onChange={handleInputChange} className="w-full bg-slate-50 border text-slate-900 focus:bg-white dark:bg-white/5 dark:text-white rounded-xl px-4 py-3 focus:outline-none focus:border-red-500 dark:focus:bg-white/10 transition-colors duration-300 border-slate-200 dark:border-white/10" />
                 </div>
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 dark:text-white/90 mb-1.5">Apellidos</label>
-                  <input type="text" name="apellidos" value={formData.apellidos} onChange={handleInputChange} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-red-500" />
+                <div className="flex flex-col gap-2">
+                  <label className="text-xs uppercase tracking-widest text-slate-700 dark:text-white/80 font-medium ml-1">Apellidos</label>
+                  <input type="text" name="apellidos" disabled={saving} value={formData.apellidos} onChange={handleInputChange} className="w-full bg-slate-50 border text-slate-900 focus:bg-white dark:bg-white/5 dark:text-white rounded-xl px-4 py-3 focus:outline-none focus:border-red-500 dark:focus:bg-white/10 transition-colors duration-300 border-slate-200 dark:border-white/10" />
                 </div>
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 dark:text-white/90 mb-1.5">Teléfono</label>
-                  <input type="text" name="telefono" value={formData.telefono} onChange={handleInputChange} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-red-500" />
+                <div className="flex flex-col gap-2">
+                  <label className="text-xs uppercase tracking-widest text-slate-700 dark:text-white/80 font-medium ml-1">Teléfono</label>
+                  <input type="text" name="telefono" disabled={saving} value={formData.telefono} onChange={handleInputChange} className="w-full bg-slate-50 border text-slate-900 focus:bg-white dark:bg-white/5 dark:text-white rounded-xl px-4 py-3 focus:outline-none focus:border-red-500 dark:focus:bg-white/10 transition-colors duration-300 border-slate-200 dark:border-white/10" />
                 </div>
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 dark:text-white/90 mb-1.5">Disciplina</label>
-                  <select name="disciplina" value={formData.disciplina} onChange={handleInputChange} className="w-full bg-slate-50 dark:bg-slate-800 dark:focus:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-red-500">
+                <div className="flex flex-col gap-2">
+                  <label className="text-xs uppercase tracking-widest text-slate-700 dark:text-white/80 font-medium ml-1">Disciplina</label>
+                  <select name="disciplina" disabled={saving} value={formData.disciplina} onChange={handleInputChange} className="w-full appearance-none bg-slate-50 border border-slate-200 text-slate-900 focus:bg-white dark:bg-slate-800 dark:focus:bg-slate-800 dark:border-white/10 dark:text-white rounded-xl px-4 py-3 focus:outline-none focus:border-red-500 transition-colors duration-300">
                     {DISCIPLINAS.map(d => <option key={d} value={d} className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white">{d}</option>)}
                   </select>
                 </div>
-              </div>
 
-              <div className="flex gap-3 mt-8">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-white/90 bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 rounded-xl transition-colors">
-                  Cancelar
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="group relative w-full flex items-center justify-center bg-red-600 text-white px-6 py-4 rounded-xl mt-4 font-medium hover:bg-red-700 transition-all duration-500 active:scale-[0.98] disabled:opacity-70 disabled:active:scale-100 overflow-hidden"
+                >
+                  <span className="relative z-10 flex items-center gap-2">
+                    {saving ? (
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                      'Guardar Profesor'
+                    )}
+                  </span>
                 </button>
-                <button type="submit" disabled={saving} className="flex-1 px-4 py-2.5 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 rounded-xl transition-all disabled:opacity-50 flex justify-center items-center gap-2">
-                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Guardar'}
-                </button>
-              </div>
-            </form>
+              </form>
+            </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Details Modal */}
-      {isDetailsModalOpen && selectedProfesor && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 dark:bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 border border-slate-200 dark:border-white/10">
-            <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02]">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-slate-200 dark:bg-white/10 rounded-full flex items-center justify-center text-xl font-bold text-slate-700 dark:text-white">
-                  {selectedProfesor.nombre.charAt(0)}
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-                    {selectedProfesor.nombre} {selectedProfesor.apellidos}
-                  </h2>
-                  <div className="flex items-center gap-1.5 mt-1">
-                    <span className={`w-1.5 h-1.5 rounded-full ${selectedProfesor.disciplina === 'Muay Thai' ? 'bg-red-500' : 'bg-blue-500'}`}></span>
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
-                      {selectedProfesor.disciplina || 'Taekwondo'}
-                    </span>
+      {isDetailsModalOpen && selectedProfesor && createPortal(
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/40 dark:bg-slate-800/60 backdrop-blur-md transition-all duration-300 ease-in-out" onClick={() => setIsDetailsModalOpen(false)} />
+
+          <div className="relative w-full max-w-2xl max-h-[85vh] p-1.5 bg-slate-50/80 dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 rounded-[2rem] shadow-xl dark:shadow-2xl animate-in fade-in zoom-in-95 duration-300 flex flex-col">
+            <div className="bg-white dark:bg-slate-900 rounded-[calc(2rem-0.375rem)] shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] flex flex-col overflow-hidden h-full">
+              <div className="flex items-center justify-between px-8 py-6 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02]">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-slate-200 dark:bg-white/10 rounded-full flex items-center justify-center text-xl font-bold text-slate-700 dark:text-white">
+                    {selectedProfesor.nombre.charAt(0)}
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                      {selectedProfesor.nombre} {selectedProfesor.apellidos}
+                    </h2>
+                    <div className="flex items-center gap-1.5 mt-1">
+                      <span className={`w-1.5 h-1.5 rounded-full ${selectedProfesor.disciplina === 'Muay Thai' ? 'bg-red-500' : 'bg-blue-500'}`}></span>
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+                        {selectedProfesor.disciplina || 'Taekwondo'}
+                      </span>
+                    </div>
                   </div>
                 </div>
+                <button
+                  onClick={() => setIsDetailsModalOpen(false)}
+                  className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-900 dark:bg-white/5 dark:text-white/70 flex items-center justify-center dark:hover:bg-white/10 dark:hover:text-white transition-all duration-300 ease-in-out"
+                >
+                  <X className="w-4 h-4 transition-transform duration-300 hover:rotate-90" />
+                </button>
               </div>
-              <button onClick={() => setIsDetailsModalOpen(false)} className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-white rounded-xl transition-colors">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
             
-            <div className="flex-1 overflow-y-auto p-6">
+              <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
               {detailsLoading ? (
                 <div className="flex justify-center py-10"><Loader2 className="w-8 h-8 animate-spin text-red-500" /></div>
               ) : (
@@ -320,8 +373,8 @@ export default function Profesores() {
                   
                   {/* Summary Stats */}
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-slate-50 dark:bg-white/5 rounded-2xl p-4 flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                    <div className="bg-slate-50/50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5 rounded-2xl p-4 flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-red-600 dark:text-red-500">
                         <Calendar className="w-5 h-5" />
                       </div>
                       <div>
@@ -329,8 +382,8 @@ export default function Profesores() {
                         <p className="text-xs font-medium text-slate-500 dark:text-white/60">Horarios a cargo</p>
                       </div>
                     </div>
-                    <div className="bg-slate-50 dark:bg-white/5 rounded-2xl p-4 flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                    <div className="bg-slate-50/50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5 rounded-2xl p-4 flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-red-600 dark:text-red-500">
                         <Users className="w-5 h-5" />
                       </div>
                       <div>
@@ -365,7 +418,7 @@ export default function Profesores() {
                                 <button
                                   key={horario.id}
                                   onClick={() => setSelectedHorarioView(horario)}
-                                  className="group flex items-center justify-between p-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-2xl hover:border-red-300 dark:hover:border-red-500/50 hover:shadow-sm transition-all text-left"
+                                  className="group flex items-center justify-between p-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-2xl hover:border-red-600 dark:hover:border-red-500 hover:shadow-sm transition-all text-left"
                                 >
                                   <div>
                                     <h4 className="font-bold text-slate-900 dark:text-white group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">
@@ -379,7 +432,7 @@ export default function Profesores() {
                                     <div className="text-xs font-bold px-3 py-1 bg-slate-50 dark:bg-white/5 rounded-full text-slate-600 dark:text-white/80">
                                       {alumnosActivos.length} Alumnos
                                     </div>
-                                    <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-red-500 transition-colors" />
+                                    <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-red-600 transition-colors" />
                                   </div>
                                 </button>
                               );
@@ -506,10 +559,48 @@ export default function Profesores() {
                   </div>
                 </div>
               )}
+              </div>
             </div>
-            
           </div>
-        </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Modal - Confirmar Eliminar */}
+      {deleteId && createPortal(
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/40 dark:bg-slate-800/60 backdrop-blur-md transition-all duration-300 ease-in-out" onClick={() => !deleting && setDeleteId(null)} />
+
+          <div className="relative w-full max-w-sm p-1.5 bg-slate-50/80 dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 rounded-[2rem] shadow-xl dark:shadow-2xl animate-in fade-in zoom-in-95 duration-300 ease-in-out">
+            <div className="p-8 bg-white dark:bg-slate-800 rounded-[calc(2rem-0.375rem)] shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] flex flex-col gap-6 text-center transition-all duration-300 ease-in-out">
+              <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center mx-auto">
+                <AlertCircle className="w-8 h-8 text-red-600 dark:text-red-500" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2 transition-all duration-300 ease-in-out">¿Eliminar profesor?</h3>
+                <p className="text-sm text-slate-700 dark:text-white/80 transition-all duration-300 ease-in-out">Esta acción no se puede deshacer y los horarios asociados perderán su asignación.</p>
+              </div>
+              <div className="flex items-center gap-3 mt-2">
+                <button
+                  onClick={() => setDeleteId(null)}
+                  disabled={deleting}
+                  className="flex-1 py-3 px-4 rounded-xl font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 dark:text-white dark:bg-white/5 dark:hover:bg-white/10 transition-all duration-300 ease-in-out disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  className="flex-1 py-3 px-4 rounded-xl font-medium text-white bg-red-600 hover:bg-red-700 transition-all duration-300 ease-in-out disabled:opacity-70 flex items-center justify-center gap-2"
+                >
+                  {deleting && <Loader2 className="w-4 h-4 animate-spin" />}
+                  <span>Eliminar</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body
       )}
     </>
   );
