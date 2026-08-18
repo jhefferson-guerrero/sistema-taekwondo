@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../services/supabaseClient';
 import { Loader2, TrendingUp, Users, AlertTriangle, Calendar } from 'lucide-react';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export default function Dashboard() {
   const [loading, setLoading] = useState(true);
@@ -12,6 +13,9 @@ export default function Dashboard() {
 
   // Alertas
   const [alertas, setAlertas] = useState([]);
+
+  // Gráfico
+  const [chartData, setChartData] = useState([]);
 
   useEffect(() => {
     fetchData();
@@ -108,6 +112,33 @@ export default function Dashboard() {
       listaAlertas.sort((a, b) => a.vDate - b.vDate);
       setAlertas(listaAlertas);
 
+      // 5. Chart Data (Últimos 6 meses)
+      const last6Months = [];
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date(currentYear, currentMonth - i, 1);
+        const monthName = d.toLocaleString('es-ES', { month: 'short' }); 
+        last6Months.push({
+          name: monthName.charAt(0).toUpperCase() + monthName.slice(1),
+          monthNum: d.getMonth(),
+          yearNum: d.getFullYear(),
+          ingresos: 0
+        });
+      }
+
+      pagosData.forEach(p => {
+        if (!p.fecha_inicio) return;
+        const pDate = new Date(`${p.fecha_inicio}T00:00:00`);
+        const pMonth = pDate.getMonth();
+        const pYear = pDate.getFullYear();
+        
+        const targetMonth = last6Months.find(m => m.monthNum === pMonth && m.yearNum === pYear);
+        if (targetMonth) {
+          targetMonth.ingresos += Number(p.monto || 0);
+        }
+      });
+      
+      setChartData(last6Months);
+
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
     } finally {
@@ -186,6 +217,93 @@ export default function Dashboard() {
                 </div>
               </div>
 
+            </div>
+
+            {/* SECCIÓN GRÁFICO (Premium Style) */}
+            <div className="mt-2 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300 p-1.5 bg-slate-50/80 dark:bg-white/[0.02] border border-slate-300 dark:border-white/20 rounded-[2rem] shadow-[0_12px_40px_-12px_rgba(0,0,0,0.15)] dark:shadow-[0_12px_40px_-12px_rgba(255,255,255,0.05)] backdrop-blur-xl transition-all ease-[cubic-bezier(0.32,0.72,0,1)] fill-mode-both">
+              <div className="p-6 sm:p-8 bg-white dark:bg-slate-800 rounded-[calc(2rem-0.375rem)] shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] flex flex-col w-full relative overflow-hidden transition-colors duration-500">
+                
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 relative z-10">
+                  <div>
+                    <h2 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Evolución de Ingresos</h2>
+                    <p className="text-sm text-slate-500 dark:text-white/60 mt-1">Últimos 6 meses de facturación</p>
+                  </div>
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 transition-colors duration-500">
+                    <div className="w-2 h-2 rounded-full bg-red-600 dark:bg-red-500 animate-pulse" />
+                    <span className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-700 dark:text-white/80">
+                      Actualizado
+                    </span>
+                  </div>
+                </div>
+
+                <div className="w-full h-[300px] sm:h-[350px] relative z-10 focus:outline-none">
+                  <ResponsiveContainer width="100%" height="100%" className="focus:outline-none">
+                    <AreaChart
+                      data={chartData}
+                      margin={{ top: 10, right: 10, left: 10, bottom: 0 }}
+                      style={{ outline: 'none' }}
+                    >
+                      <defs>
+                        <linearGradient id="colorIngresos" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#8B0D1A" stopOpacity={0.6} />
+                          <stop offset="95%" stopColor="#8B0D1A" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" className="text-slate-200 dark:text-white/10 transition-colors duration-500" />
+                      <XAxis 
+                        dataKey="name" 
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fill: '#64748b', fontSize: 12, fontWeight: 500 }}
+                        dy={10}
+                        className="dark:opacity-70 transition-opacity duration-500"
+                      />
+                      <YAxis 
+                        axisLine={false}
+                        tickLine={false}
+                        width={65}
+                        tick={{ fill: '#64748b', fontSize: 12, fontWeight: 500 }}
+                        tickFormatter={(value) => `S/ ${value}`}
+                        className="dark:opacity-70 transition-opacity duration-500"
+                      />
+                      <Tooltip 
+                        content={({ active, payload }) => {
+                          if (active && payload && payload.length) {
+                            return (
+                              <div className="bg-slate-900/90 dark:bg-white/90 backdrop-blur-md text-white dark:text-slate-900 px-4 py-3 rounded-2xl shadow-xl border border-white/10 dark:border-slate-900/10">
+                                <p className="text-xs font-semibold uppercase tracking-wider opacity-70 mb-1">{payload[0].payload.name}</p>
+                                <p className="text-lg font-bold">
+                                  S/ {payload[0].value.toFixed(2)}
+                                </p>
+                              </div>
+                            );
+                          }
+                          return null;
+                        }}
+                      />
+                      <Area 
+                        type="monotone" 
+                        dataKey="ingresos" 
+                        stroke="#8B0D1A" 
+                        strokeWidth={4}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        fillOpacity={1} 
+                        fill="url(#colorIngresos)" 
+                        animationDuration={1500}
+                        animationEasing="ease-out"
+                        activeDot={{ 
+                          r: 6, 
+                          fill: '#8B0D1A', 
+                          stroke: '#ffffff', 
+                          strokeWidth: 3, 
+                          className: 'drop-shadow-md dark:stroke-slate-800'
+                        }}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
             </div>
 
             {/* SECCIÓN ALERTAS */}

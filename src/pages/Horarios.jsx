@@ -23,6 +23,10 @@ export default function Horarios() {
   const [deleteId, setDeleteId] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
+  // Filters
+  const [searchTerm, setSearchTerm] = useState('');
+  const [dayFilter, setDayFilter] = useState('Todos');
+
   // Form State
   const [formData, setFormData] = useState({
     nombre: '',
@@ -234,6 +238,12 @@ export default function Horarios() {
     return timeStr.substring(0, 5);
   };
 
+  const filteredHorarios = horarios.filter(horario => {
+    const matchesSearch = horario.nombre.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesDay = dayFilter === 'Todos' || (horario.dias && horario.dias.includes(dayFilter));
+    return matchesSearch && matchesDay;
+  });
+
   return (
     <>
       <div className="flex flex-col gap-8">
@@ -262,12 +272,44 @@ export default function Horarios() {
           </button>
         </header>
 
+        {/* Filters */}
+        <div className="flex flex-col sm:flex-row gap-4 mb-2">
+          <div className="relative w-full sm:w-96 group/search">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <Search className="w-4 h-4 text-slate-400 group-focus-within/search:text-red-600 dark:text-white/40 dark:group-focus-within/search:text-red-500 transition-colors" />
+            </div>
+            <input
+              type="text"
+              placeholder="Buscar por nombre de horario..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl py-3 pl-11 pr-4 focus:outline-none focus:border-red-600 dark:focus:border-red-500 transition-all duration-300 ease-in-out shadow-sm"
+            />
+          </div>
+
+          <div className="relative w-full sm:w-56 group/filter">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <CalendarIcon className="w-4 h-4 text-slate-400 group-focus-within/filter:text-red-600 dark:text-white/40 dark:group-focus-within/filter:text-red-500 transition-all duration-300 ease-in-out" />
+            </div>
+            <select
+              value={dayFilter}
+              onChange={(e) => setDayFilter(e.target.value)}
+              className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl py-3 pl-11 pr-4 focus:outline-none focus:border-red-600 dark:focus:border-red-500 transition-all duration-300 ease-in-out shadow-sm appearance-none"
+            >
+              <option value="Todos">Todos los días</option>
+              {DIAS_SEMANA.map(d => (
+                <option key={d.full} value={d.full}>{d.full}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
         {/* Grid de Horarios */}
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="w-8 h-8 text-red-600 animate-spin" />
           </div>
-        ) : horarios.length === 0 ? (
+        ) : filteredHorarios.length === 0 ? (
           <div className="p-1.5 bg-slate-50/80 dark:bg-white/[0.02] border border-slate-300 dark:border-white/20 border-t-[4px] border-t-red-600 dark:border-t-red-600 rounded-[2rem] shadow-[0_12px_40px_-12px_rgba(0,0,0,0.15)] dark:shadow-[0_12px_40px_-12px_rgba(255,255,255,0.05)] backdrop-blur-xl transition-all duration-700 w-full overflow-hidden">
             <div className="bg-white dark:bg-slate-800 rounded-[calc(2rem-0.375rem)] shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] flex flex-col w-full relative min-h-[400px] transition-colors duration-500 items-center justify-center text-center p-12">
               <div className="animate-in fade-in zoom-in-95 duration-700 flex flex-col items-center">
@@ -275,17 +317,19 @@ export default function Horarios() {
                   <Clock className="w-8 h-8 text-slate-400 dark:text-white/30" strokeWidth={1.5} />
                 </div>
                 <h3 className="text-xl font-semibold text-slate-900 dark:text-white tracking-tight transition-colors duration-500">
-                  Sin horarios registrados
+                  {horarios.length === 0 ? "Sin horarios registrados" : "Ningún horario coincide"}
                 </h3>
                 <p className="text-slate-500 dark:text-white/60 mt-2 max-w-sm text-sm transition-colors duration-500">
-                  Aún no has creado ningún turno u horario. Haz clic en "Nuevo Horario" para empezar.
+                  {horarios.length === 0 
+                    ? "Aún no has creado ningún turno u horario. Haz clic en \"Nuevo Horario\" para empezar." 
+                    : "Ajusta los filtros de búsqueda para encontrar horarios."}
                 </p>
               </div>
             </div>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 animate-in fade-in duration-700">
-            {horarios.map((horario) => (
+            {filteredHorarios.map((horario) => (
               <div
                 key={horario.id}
                 className="group relative flex flex-col p-6 bg-white dark:bg-slate-800 border border-slate-300 dark:border-white/20 border-t-[4px] border-t-red-600 dark:border-t-red-600 rounded-[2rem] shadow-[0_12px_40px_-12px_rgba(0,0,0,0.15)] dark:shadow-[0_12px_40px_-12px_rgba(255,255,255,0.05)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.2)] dark:hover:shadow-[0_20px_50px_-12px_rgba(255,255,255,0.08)] overflow-hidden"

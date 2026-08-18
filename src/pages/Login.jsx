@@ -2,16 +2,24 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabaseClient';
 import { ArrowRight, Lock, Mail, Loader2, AlertCircle } from 'lucide-react';
+import { Turnstile } from '@marsidev/react-turnstile';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [captchaToken, setCaptchaToken] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    
+    if (!captchaToken) {
+      setError('Por favor, completa la verificación de seguridad (CAPTCHA).');
+      return;
+    }
+
     setLoading(true);
     setError('');
 
@@ -19,6 +27,9 @@ export default function Login() {
       const { data, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
+        options: {
+          captchaToken,
+        }
       });
 
       if (authError) {
@@ -105,6 +116,15 @@ export default function Login() {
                       required
                     />
                   </div>
+                </div>
+
+                <div className="flex justify-center my-2 h-[65px] items-center">
+                  <Turnstile 
+                    siteKey="0x4AAAAAAEUYrvEiRv0guF-N" 
+                    onSuccess={(token) => setCaptchaToken(token)}
+                    onExpire={() => setCaptchaToken('')}
+                    options={{ theme: 'auto' }}
+                  />
                 </div>
 
                 <button

@@ -1,21 +1,21 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { supabase } from '../services/supabaseClient';
-import { Search, Plus, Loader2, Edit2, Trash2, GraduationCap, X, Calendar, Users, Phone, User, MapPin, ChevronRight, ArrowLeft, AlertCircle } from 'lucide-react';
+import { Search, Plus, Loader2, Edit2, Trash2, GraduationCap, X, Calendar, Users, Phone, User, MapPin, ChevronRight, ArrowLeft, AlertCircle, Activity } from 'lucide-react';
 import { DISCIPLINAS } from '../utils/constants';
 
 export default function Profesores() {
   const [profesores, setProfesores] = useState([]);
   const [loading, setLoading] = useState(true);
-  
+
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
   const [disciplinaFilter, setDisciplinaFilter] = useState('Todos');
-  
+
   // Modals
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
-  
+
   // Form State
   const [formData, setFormData] = useState({
     nombre: '',
@@ -28,7 +28,7 @@ export default function Profesores() {
   const [saving, setSaving] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
   const [deleting, setDeleting] = useState(false);
-  
+
   // Details State
   const [selectedProfesor, setSelectedProfesor] = useState(null);
   const [detailsLoading, setDetailsLoading] = useState(false);
@@ -84,7 +84,7 @@ export default function Profesores() {
     setDetailsLoading(true);
     setDetailsSearchTerm('');
     setSelectedHorarioView(null);
-    
+
     try {
       const { data, error } = await supabase
         .from('profesores')
@@ -97,7 +97,7 @@ export default function Profesores() {
         `)
         .eq('id', profesor.id)
         .single();
-        
+
       if (error) throw error;
       setSelectedProfesor(data);
     } catch (err) {
@@ -202,11 +202,14 @@ export default function Profesores() {
             />
           </div>
 
-          <div className="relative w-full sm:w-48 group/filter">
+          <div className="relative w-full sm:w-60 group/filter">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <Activity className="w-4 h-4 text-slate-400 group-focus-within/filter:text-red-600 dark:text-white/40 dark:group-focus-within/filter:text-red-500 transition-all duration-300 ease-in-out" />
+            </div>
             <select
               value={disciplinaFilter}
               onChange={(e) => setDisciplinaFilter(e.target.value)}
-              className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl py-3 px-4 focus:outline-none focus:border-red-600 dark:focus:border-red-500 transition-all duration-300 ease-in-out shadow-sm appearance-none"
+              className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl py-3 pl-11 pr-4 focus:outline-none focus:border-red-600 dark:focus:border-red-500 transition-all duration-300 ease-in-out shadow-sm appearance-none"
             >
               <option value="Todos">Todas las disciplinas</option>
               {DISCIPLINAS.map(d => (
@@ -230,8 +233,8 @@ export default function Profesores() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in duration-700">
             {filteredProfesores.map((prof) => (
-              <div 
-                key={prof.id} 
+              <div
+                key={prof.id}
                 onClick={() => openDetailsModal(prof)}
                 className="group relative flex flex-col p-6 bg-white dark:bg-slate-800 border border-slate-300 dark:border-white/20 border-t-[4px] border-t-red-600 dark:border-t-red-600 rounded-[2rem] shadow-[0_12px_40px_-12px_rgba(0,0,0,0.15)] dark:shadow-[0_12px_40px_-12px_rgba(255,255,255,0.05)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.2)] dark:hover:shadow-[0_20px_50px_-12px_rgba(255,255,255,0.08)] overflow-hidden cursor-pointer"
               >
@@ -248,11 +251,11 @@ export default function Profesores() {
                     </button>
                   </div>
                 </div>
-                
+
                 <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-1 truncate">
                   {prof.nombre} {prof.apellidos}
                 </h3>
-                
+
                 <div className="flex items-center gap-1.5 mb-4">
                   <span className={`w-1.5 h-1.5 rounded-full ${prof.disciplina === 'Muay Thai' ? 'bg-red-500' : 'bg-blue-500'}`}></span>
                   <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
@@ -292,7 +295,7 @@ export default function Profesores() {
                   <X className="w-4 h-4 transition-transform duration-300 hover:rotate-90" />
                 </button>
               </div>
-            
+
               <form onSubmit={handleSubmit} className="flex flex-col gap-6">
                 <div className="flex flex-col gap-2">
                   <label className="text-xs uppercase tracking-widest text-slate-700 dark:text-white/80 font-medium ml-1">Nombre <span className="text-red-500">*</span></label>
@@ -364,201 +367,201 @@ export default function Profesores() {
                   <X className="w-4 h-4 transition-transform duration-300 hover:rotate-90" />
                 </button>
               </div>
-            
+
               <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
-              {detailsLoading ? (
-                <div className="flex justify-center py-10"><Loader2 className="w-8 h-8 animate-spin text-red-500" /></div>
-              ) : (
-                <div className="flex flex-col gap-8">
-                  
-                  {/* Summary Stats */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-slate-50/50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5 rounded-2xl p-4 flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-red-600 dark:text-red-500">
-                        <Calendar className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <p className="text-2xl font-bold text-slate-900 dark:text-white">{selectedProfesor.horarios?.length || 0}</p>
-                        <p className="text-xs font-medium text-slate-500 dark:text-white/60">Horarios a cargo</p>
-                      </div>
-                    </div>
-                    <div className="bg-slate-50/50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5 rounded-2xl p-4 flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-red-600 dark:text-red-500">
-                        <Users className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <p className="text-2xl font-bold text-slate-900 dark:text-white">
-                          {selectedProfesor.horarios?.reduce((acc, curr) => acc + (curr.alumnos?.filter(a => a.estado !== 'Inactivo').length || 0), 0) || 0}
-                        </p>
-                        <p className="text-xs font-medium text-slate-500 dark:text-white/60">Alumnos Activos</p>
-                      </div>
-                    </div>
-                  </div>
-                  {/* Navigation View for Schedules/Students */}
-                  <div className="flex flex-col h-full mt-2">
-                    
-                    {!selectedHorarioView ? (
-                      // --- VIEW 1: LIST OF SCHEDULES ---
-                      <>
-                        <div className="mb-4">
-                          <h3 className="text-base font-bold text-slate-900 dark:text-white">Horarios Asignados</h3>
-                          <p className="text-sm text-slate-500 dark:text-white/60">Selecciona un horario para ver a sus alumnos matriculados.</p>
-                        </div>
+                {detailsLoading ? (
+                  <div className="flex justify-center py-10"><Loader2 className="w-8 h-8 animate-spin text-red-500" /></div>
+                ) : (
+                  <div className="flex flex-col gap-8">
 
-                        {(!selectedProfesor.horarios || selectedProfesor.horarios.length === 0) ? (
-                          <p className="text-sm text-slate-500 dark:text-white/50 text-center py-6 bg-slate-50 dark:bg-white/5 rounded-xl">
-                            Este profesor no tiene horarios asignados.
+                    {/* Summary Stats */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="bg-slate-50/50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5 rounded-2xl p-4 flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-red-600 dark:text-red-500">
+                          <Calendar className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <p className="text-2xl font-bold text-slate-900 dark:text-white">{selectedProfesor.horarios?.length || 0}</p>
+                          <p className="text-xs font-medium text-slate-500 dark:text-white/60">Horarios a cargo</p>
+                        </div>
+                      </div>
+                      <div className="bg-slate-50/50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5 rounded-2xl p-4 flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-red-600 dark:text-red-500">
+                          <Users className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <p className="text-2xl font-bold text-slate-900 dark:text-white">
+                            {selectedProfesor.horarios?.reduce((acc, curr) => acc + (curr.alumnos?.filter(a => a.estado !== 'Inactivo').length || 0), 0) || 0}
                           </p>
-                        ) : (
-                          <div className="flex flex-col gap-3">
-                            {selectedProfesor.horarios.map(horario => {
-                              const alumnosActivos = (horario.alumnos || []).filter(a => a.estado !== 'Inactivo');
-                              
-                              return (
-                                <button
-                                  key={horario.id}
-                                  onClick={() => setSelectedHorarioView(horario)}
-                                  className="group flex items-center justify-between p-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-2xl hover:border-red-600 dark:hover:border-red-500 hover:shadow-sm transition-all text-left"
-                                >
-                                  <div>
-                                    <h4 className="font-bold text-slate-900 dark:text-white group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">
-                                      {horario.nombre}
-                                    </h4>
-                                    <p className="text-xs text-slate-500 dark:text-white/60 mt-1">
-                                      {horario.hora_inicio.substring(0, 5)} - {horario.hora_fin.substring(0, 5)}
-                                    </p>
-                                  </div>
-                                  <div className="flex items-center gap-4">
-                                    <div className="text-xs font-bold px-3 py-1 bg-slate-50 dark:bg-white/5 rounded-full text-slate-600 dark:text-white/80">
-                                      {alumnosActivos.length} Alumnos
-                                    </div>
-                                    <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-red-600 transition-colors" />
-                                  </div>
-                                </button>
-                              );
-                            })}
+                          <p className="text-xs font-medium text-slate-500 dark:text-white/60">Alumnos Activos</p>
+                        </div>
+                      </div>
+                    </div>
+                    {/* Navigation View for Schedules/Students */}
+                    <div className="flex flex-col h-full mt-2">
+
+                      {!selectedHorarioView ? (
+                        // --- VIEW 1: LIST OF SCHEDULES ---
+                        <>
+                          <div className="mb-4">
+                            <h3 className="text-base font-bold text-slate-900 dark:text-white">Horarios Asignados</h3>
+                            <p className="text-sm text-slate-500 dark:text-white/60">Selecciona un horario para ver a sus alumnos matriculados.</p>
                           </div>
-                        )}
-                      </>
-                    ) : (
-                      // --- VIEW 2: LIST OF STUDENTS IN SCHEDULE ---
-                      <div className="flex flex-col h-full animate-in slide-in-from-right-4 duration-300">
-                        <div className="flex items-center gap-3 mb-6">
-                          <button
-                            onClick={() => {
-                              setSelectedHorarioView(null);
-                              setDetailsSearchTerm('');
-                            }}
-                            className="p-2 -ml-2 text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-xl transition-colors"
-                          >
-                            <ArrowLeft className="w-5 h-5" />
-                          </button>
-                          <div>
-                            <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                              {selectedHorarioView.nombre}
-                            </h3>
-                            <p className="text-xs text-slate-500 dark:text-white/60 mt-0.5">
-                              {selectedHorarioView.hora_inicio.substring(0, 5)} - {selectedHorarioView.hora_fin.substring(0, 5)}
+
+                          {(!selectedProfesor.horarios || selectedProfesor.horarios.length === 0) ? (
+                            <p className="text-sm text-slate-500 dark:text-white/50 text-center py-6 bg-slate-50 dark:bg-white/5 rounded-xl">
+                              Este profesor no tiene horarios asignados.
                             </p>
-                          </div>
-                        </div>
+                          ) : (
+                            <div className="flex flex-col gap-3">
+                              {selectedProfesor.horarios.map(horario => {
+                                const alumnosActivos = (horario.alumnos || []).filter(a => a.estado !== 'Inactivo');
 
-                        <div className="relative mb-4">
-                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <Search className="w-4 h-4 text-slate-400" />
-                          </div>
-                          <input
-                            type="text"
-                            placeholder="Buscar alumno en este horario..."
-                            value={detailsSearchTerm}
-                            onChange={(e) => setDetailsSearchTerm(e.target.value)}
-                            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-sm text-slate-900 dark:text-white rounded-xl pl-9 pr-3 py-2.5 focus:outline-none focus:border-red-500 transition-colors shadow-sm"
-                          />
-                        </div>
-
-                        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-2xl overflow-hidden flex-1 max-h-[50vh] flex flex-col shadow-sm">
-                          <div className="overflow-y-auto">
-                            {(() => {
-                              const now = new Date();
-                              const todayTime = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-
-                              let alumnosActivos = (selectedHorarioView.alumnos || [])
-                                .filter(a => a.estado !== 'Inactivo')
-                                .map(a => {
-                                  let paymentStatus = 'none';
-                                  if (a.pagos && a.pagos.length > 0) {
-                                    const latestPago = [...a.pagos].sort((x, y) => new Date(y.fecha_vencimiento) - new Date(x.fecha_vencimiento))[0];
-                                    const vDate = new Date(latestPago.fecha_vencimiento + 'T00:00:00');
-                                    const vTime = vDate.getTime();
-                                    const diffDays = Math.ceil((vTime - todayTime) / (1000 * 60 * 60 * 24));
-
-                                    if (diffDays < 0) {
-                                      paymentStatus = 'expired';
-                                    } else if (diffDays <= 5) {
-                                      paymentStatus = 'warning';
-                                    } else {
-                                      paymentStatus = 'ok';
-                                    }
-                                  }
-                                  return { ...a, paymentStatus };
-                                });
-
-                              if (detailsSearchTerm) {
-                                alumnosActivos = alumnosActivos.filter(a => {
-                                  const full = (a.nombre + ' ' + a.apellidos).toLowerCase();
-                                  return full.includes(detailsSearchTerm.toLowerCase());
-                                });
-                              }
-
-                              if (alumnosActivos.length === 0) {
                                 return (
-                                  <div className="p-8 text-center text-sm text-slate-400 dark:text-white/40 italic">
-                                    {detailsSearchTerm ? 'Ningún alumno coincide con la búsqueda.' : 'Ningún alumno matriculado.'}
+                                  <button
+                                    key={horario.id}
+                                    onClick={() => setSelectedHorarioView(horario)}
+                                    className="group flex items-center justify-between p-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-2xl hover:border-red-600 dark:hover:border-red-500 hover:shadow-sm transition-all text-left"
+                                  >
+                                    <div>
+                                      <h4 className="font-bold text-slate-900 dark:text-white group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">
+                                        {horario.nombre}
+                                      </h4>
+                                      <p className="text-xs text-slate-500 dark:text-white/60 mt-1">
+                                        {horario.hora_inicio.substring(0, 5)} - {horario.hora_fin.substring(0, 5)}
+                                      </p>
+                                    </div>
+                                    <div className="flex items-center gap-4">
+                                      <div className="text-xs font-bold px-3 py-1 bg-slate-50 dark:bg-white/5 rounded-full text-slate-600 dark:text-white/80">
+                                        {alumnosActivos.length} Alumnos
+                                      </div>
+                                      <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-red-600 transition-colors" />
+                                    </div>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        // --- VIEW 2: LIST OF STUDENTS IN SCHEDULE ---
+                        <div className="flex flex-col h-full animate-in slide-in-from-right-4 duration-300">
+                          <div className="flex items-center gap-3 mb-6">
+                            <button
+                              onClick={() => {
+                                setSelectedHorarioView(null);
+                                setDetailsSearchTerm('');
+                              }}
+                              className="p-2 -ml-2 text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-xl transition-colors"
+                            >
+                              <ArrowLeft className="w-5 h-5" />
+                            </button>
+                            <div>
+                              <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                                {selectedHorarioView.nombre}
+                              </h3>
+                              <p className="text-xs text-slate-500 dark:text-white/60 mt-0.5">
+                                {selectedHorarioView.hora_inicio.substring(0, 5)} - {selectedHorarioView.hora_fin.substring(0, 5)}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="relative mb-4">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                              <Search className="w-4 h-4 text-slate-400" />
+                            </div>
+                            <input
+                              type="text"
+                              placeholder="Buscar alumno en este horario..."
+                              value={detailsSearchTerm}
+                              onChange={(e) => setDetailsSearchTerm(e.target.value)}
+                              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-sm text-slate-900 dark:text-white rounded-xl pl-9 pr-3 py-2.5 focus:outline-none focus:border-red-500 transition-colors shadow-sm"
+                            />
+                          </div>
+
+                          <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-2xl overflow-hidden flex-1 max-h-[50vh] flex flex-col shadow-sm">
+                            <div className="overflow-y-auto">
+                              {(() => {
+                                const now = new Date();
+                                const todayTime = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+
+                                let alumnosActivos = (selectedHorarioView.alumnos || [])
+                                  .filter(a => a.estado !== 'Inactivo')
+                                  .map(a => {
+                                    let paymentStatus = 'none';
+                                    if (a.pagos && a.pagos.length > 0) {
+                                      const latestPago = [...a.pagos].sort((x, y) => new Date(y.fecha_vencimiento) - new Date(x.fecha_vencimiento))[0];
+                                      const vDate = new Date(latestPago.fecha_vencimiento + 'T00:00:00');
+                                      const vTime = vDate.getTime();
+                                      const diffDays = Math.ceil((vTime - todayTime) / (1000 * 60 * 60 * 24));
+
+                                      if (diffDays < 0) {
+                                        paymentStatus = 'expired';
+                                      } else if (diffDays <= 5) {
+                                        paymentStatus = 'warning';
+                                      } else {
+                                        paymentStatus = 'ok';
+                                      }
+                                    }
+                                    return { ...a, paymentStatus };
+                                  });
+
+                                if (detailsSearchTerm) {
+                                  alumnosActivos = alumnosActivos.filter(a => {
+                                    const full = (a.nombre + ' ' + a.apellidos).toLowerCase();
+                                    return full.includes(detailsSearchTerm.toLowerCase());
+                                  });
+                                }
+
+                                if (alumnosActivos.length === 0) {
+                                  return (
+                                    <div className="p-8 text-center text-sm text-slate-400 dark:text-white/40 italic">
+                                      {detailsSearchTerm ? 'Ningún alumno coincide con la búsqueda.' : 'Ningún alumno matriculado.'}
+                                    </div>
+                                  );
+                                }
+
+                                return (
+                                  <div className="divide-y divide-slate-100 dark:divide-white/5">
+                                    {alumnosActivos.map(alumno => (
+                                      <div key={alumno.id} className="p-3 sm:px-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors">
+                                        <div className="flex items-center text-sm font-medium text-slate-700 dark:text-white/90 pl-1">
+                                          <span className="truncate">{alumno.nombre} {alumno.apellidos}</span>
+                                        </div>
+                                        <div className="pl-3.5 sm:pl-0 flex-shrink-0">
+                                          {alumno.paymentStatus === 'ok' && (
+                                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20">
+                                              Al Día
+                                            </span>
+                                          )}
+                                          {alumno.paymentStatus === 'warning' && (
+                                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-600 border border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20">
+                                              Por Vencer
+                                            </span>
+                                          )}
+                                          {alumno.paymentStatus === 'expired' && (
+                                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-red-50 text-red-600 border border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/20">
+                                              Vencido
+                                            </span>
+                                          )}
+                                          {alumno.paymentStatus === 'none' && (
+                                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-slate-50 text-slate-500 border border-slate-200 dark:bg-white/5 dark:text-slate-400 dark:border-white/10">
+                                              Sin Pagos
+                                            </span>
+                                          )}
+                                        </div>
+                                      </div>
+                                    ))}
                                   </div>
                                 );
-                              }
-
-                              return (
-                                <div className="divide-y divide-slate-100 dark:divide-white/5">
-                                  {alumnosActivos.map(alumno => (
-                                    <div key={alumno.id} className="p-3 sm:px-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors">
-                                      <div className="flex items-center text-sm font-medium text-slate-700 dark:text-white/90 pl-1">
-                                        <span className="truncate">{alumno.nombre} {alumno.apellidos}</span>
-                                      </div>
-                                      <div className="pl-3.5 sm:pl-0 flex-shrink-0">
-                                        {alumno.paymentStatus === 'ok' && (
-                                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20">
-                                            Al Día
-                                          </span>
-                                        )}
-                                        {alumno.paymentStatus === 'warning' && (
-                                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-600 border border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20">
-                                            Por Vencer
-                                          </span>
-                                        )}
-                                        {alumno.paymentStatus === 'expired' && (
-                                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-red-50 text-red-600 border border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/20">
-                                            Vencido
-                                          </span>
-                                        )}
-                                        {alumno.paymentStatus === 'none' && (
-                                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-slate-50 text-slate-500 border border-slate-200 dark:bg-white/5 dark:text-slate-400 dark:border-white/10">
-                                            Sin Pagos
-                                          </span>
-                                        )}
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
-                              );
-                            })()}
+                              })()}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
               </div>
             </div>
           </div>

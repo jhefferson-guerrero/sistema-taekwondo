@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { supabase } from '../services/supabaseClient';
 import { DISCIPLINAS, getGradosByDisciplina } from '../utils/constants';
-import { Plus, Users, X, Loader2, Calendar, Edit2, Trash2, AlertCircle, Search, Filter, Eye, ChevronLeft, ChevronRight, Snowflake, Sun, RefreshCcw } from 'lucide-react';
+import { Plus, Users, X, Loader2, Calendar, Edit2, Trash2, AlertCircle, Search, Filter, Eye, ChevronLeft, ChevronRight, Snowflake, Sun, RefreshCcw, Activity, Download } from 'lucide-react';
 import { calcularClasesRestantes, FERIADOS_PERU } from '../utils/membresiaUtils';
+import { generarHistorialPDF } from '../utils/pdfGenerator';
 import Pagination from '../components/Pagination';
 
 export default function Alumnos() {
@@ -13,6 +14,7 @@ export default function Alumnos() {
   const [editId, setEditId] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
   const [hardDeleteId, setHardDeleteId] = useState(null);
+  const [generatingPdfId, setGeneratingPdfId] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [beltFilter, setBeltFilter] = useState('Todos');
@@ -123,6 +125,12 @@ export default function Alumnos() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDownloadPDF = async (alumno) => {
+    setGeneratingPdfId(alumno.id);
+    await generarHistorialPDF(alumno.id);
+    setGeneratingPdfId(null);
   };
 
   const handleInputChange = (e) => {
@@ -410,7 +418,7 @@ export default function Alumnos() {
         .eq('id', hardDeleteId);
 
       if (error) throw error;
-      
+
       setHardDeleteId(null);
       await fetchAlumnos();
     } catch (error) {
@@ -551,7 +559,7 @@ export default function Alumnos() {
 
         {/* Toolbar Section */}
         <div className="flex flex-col sm:flex-row items-center gap-4 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
-          
+
           <div className="flex bg-slate-200 dark:bg-slate-800 p-1 rounded-xl w-full sm:w-auto shrink-0">
             <button
               onClick={() => setStatusFilter('Activo')}
@@ -580,11 +588,14 @@ export default function Alumnos() {
             />
           </div>
 
-          <div className="relative w-full sm:w-48 group/filter">
+          <div className="relative w-full sm:w-60 group/filter">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <Activity className="w-4 h-4 text-slate-400 group-focus-within/filter:text-red-600 dark:text-white/40 dark:group-focus-within/filter:text-red-500 transition-all duration-300 ease-in-out" />
+            </div>
             <select
               value={disciplinaFilter}
               onChange={(e) => { setDisciplinaFilter(e.target.value); setBeltFilter('Todos'); }}
-              className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl py-3 px-4 focus:outline-none focus:border-red-600 dark:focus:border-red-500 transition-all duration-300 ease-in-out shadow-sm appearance-none"
+              className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl py-3 pl-11 pr-4 focus:outline-none focus:border-red-600 dark:focus:border-red-500 transition-all duration-300 ease-in-out shadow-sm appearance-none"
             >
               <option value="Todos">Todas las disciplinas</option>
               {DISCIPLINAS.map(d => (
@@ -638,8 +649,6 @@ export default function Alumnos() {
                   <tr className="border-b border-slate-200 dark:border-white/10 transition-colors duration-500">
                     <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-700 dark:text-white/80">Nombre Completo</th>
                     <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-700 dark:text-white/80 text-center">Teléfono</th>
-                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-700 dark:text-white/80 text-center">Grado</th>
-                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-700 dark:text-white/80 text-center">Horario</th>
                     <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-700 dark:text-white/80 text-center">Registro</th>
                     <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-700 dark:text-white/80 text-center">Estado Pago</th>
                     <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-700 dark:text-white/80 text-center">Acciones</th>
@@ -661,16 +670,6 @@ export default function Alumnos() {
                       </td>
                       <td className="px-8 py-5 text-center">
                         <div className="font-medium text-slate-700 dark:text-white/90 transition-colors duration-300">{alumno.telefono_padres}</div>
-                      </td>
-                      <td className="px-8 py-5 text-center">
-                        <span className="inline-flex items-center px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-xs font-bold text-slate-800 group-hover:border-slate-300 dark:bg-white/10 dark:border-white/10 dark:text-white dark:group-hover:border-white/20 transition-all duration-300 ease-in-out">
-                          {alumno.cinturon}
-                        </span>
-                      </td>
-                      <td className="px-8 py-5 text-center">
-                        <div className="font-medium text-slate-700 dark:text-white/90 transition-colors duration-300">
-                          {alumno.horarios?.nombre || '-'}
-                        </div>
                       </td>
                       <td className="px-8 py-5 text-center">
                         <div className="inline-flex items-center gap-2 text-slate-700 dark:text-white/80 text-sm">
@@ -725,6 +724,18 @@ export default function Alumnos() {
                               >
                                 <Trash2 className="w-[18px] h-[18px] transition-transform duration-300 hover:scale-110" />
                               </button>
+                              <button
+                                onClick={() => handleDownloadPDF(alumno)}
+                                disabled={generatingPdfId === alumno.id}
+                                className="p-2 text-slate-500 hover:text-red-600 dark:text-white/60 dark:hover:text-red-500 transition-all duration-300 ease-in-out rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10"
+                                title="Descargar Historial (PDF)"
+                              >
+                                {generatingPdfId === alumno.id ? (
+                                  <Loader2 className="w-[18px] h-[18px] animate-spin" />
+                                ) : (
+                                  <Download className="w-[18px] h-[18px] transition-transform duration-300 hover:-translate-y-1" />
+                                )}
+                              </button>
                             </>
                           ) : (
                             <>
@@ -755,8 +766,8 @@ export default function Alumnos() {
               </table>
             )}
           </div>
-          
-          <Pagination 
+
+          <Pagination
             currentPage={currentPage}
             totalPages={totalPages}
             totalItems={filteredAlumnos.length}
