@@ -140,7 +140,7 @@ export default function DashboardLayout({ children }) {
 
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col h-full overflow-hidden">
-        <div className="flex-1 overflow-y-auto p-8 lg:p-12" id="main-scroll-container">
+        <div className="flex-1 overflow-y-auto p-8 lg:p-12 custom-scrollbar" id="main-scroll-container">
           <div className={`mx-auto transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] w-full ${isCollapsed ? 'max-w-[1600px]' : 'max-w-[1440px]'}`}>
             {children}
           </div>
