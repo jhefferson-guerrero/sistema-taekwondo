@@ -29,6 +29,31 @@ export const generarHistorialPDF = async (alumnoId) => {
     const lightGray = [100, 116, 139];
 
     // --- ENCABEZADO ---
+    // Cargar y añadir logo de Fertex (esquina superior derecha)
+    await new Promise((resolve) => {
+      const img = new Image();
+      img.src = '/logo-fertex.webp';
+      img.onload = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0);
+          const dataUrl = canvas.toDataURL('image/png');
+          // A4 ancho es 210mm. Colocamos en X: 170, Y: 10, ancho: 25, alto: 25
+          doc.addImage(dataUrl, 'PNG', 170, 10, 25, 25);
+        } catch (e) {
+          console.warn('Error procesando logo para PDF:', e);
+        }
+        resolve();
+      };
+      img.onerror = () => {
+        console.warn('Error cargando logo-fertex.webp para el PDF');
+        resolve();
+      };
+    });
+
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(22);
     doc.setTextColor(...brandRed);
@@ -91,26 +116,25 @@ export const generarHistorialPDF = async (alumnoId) => {
       const faltas = Math.max(0, clasesPasadas - asistenciasEnPeriodo);
 
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(11);
+      doc.setFontSize(14);
       doc.setTextColor(...darkGray);
       doc.text('Resumen del Mes Actual', 14, startY);
       
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(10);
-      doc.setTextColor(...lightGray);
-      doc.text(`Periodo: ${new Date(ultimoPago.fecha_inicio).toLocaleDateString()} al ${new Date(ultimoPago.fecha_vencimiento).toLocaleDateString()}`, 14, startY + 6);
+      doc.setFontSize(11);
+      doc.setTextColor(...darkGray);
+      doc.text(`Periodo: ${new Date(ultimoPago.fecha_inicio).toLocaleDateString()} al ${new Date(ultimoPago.fecha_vencimiento).toLocaleDateString()}`, 14, startY + 8);
       
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(...brandRed);
-      doc.text(`Clases Pasadas: ${clasesPasadas}   |   Asistencias: ${asistenciasEnPeriodo}   |   Faltas: ${faltas}`, 14, startY + 12);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Clases Totales: ${clasesPasadas}   |   Asistencias: ${asistenciasEnPeriodo}   |   Faltas: ${faltas}`, 14, startY + 14);
       
-      startY += 24;
+      startY += 26;
     }
 
     // --- TABLA DE PAGOS ---
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(14);
-    doc.setTextColor(...brandRed);
+    doc.setTextColor(...darkGray);
     doc.text('Historial de Pagos', 14, startY);
 
     const pagosData = (alumno.pagos || [])
@@ -144,7 +168,7 @@ export const generarHistorialPDF = async (alumnoId) => {
 
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(14);
-    doc.setTextColor(...brandRed);
+    doc.setTextColor(...darkGray);
     doc.text('Historial de Asistencias', 14, startY);
 
     const asistenciasData = (alumno.asistencias || [])

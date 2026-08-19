@@ -7,6 +7,21 @@ import { calcularClasesRestantes, FERIADOS_PERU } from '../utils/membresiaUtils'
 import { generarHistorialPDF } from '../utils/pdfGenerator';
 import Pagination from '../components/Pagination';
 
+const calcularEdad = (fechaNacimiento) => {
+  if (!fechaNacimiento) return null;
+  const hoy = new Date();
+  // Adjust for timezone offset if needed, but for age yyyy-mm-dd is usually parsed as UTC
+  // We can just parse the string safely:
+  const [year, month, day] = fechaNacimiento.split('-');
+  const cumpleanos = new Date(year, month - 1, day);
+  let edad = hoy.getFullYear() - cumpleanos.getFullYear();
+  const m = hoy.getMonth() - cumpleanos.getMonth();
+  if (m < 0 || (m === 0 && hoy.getDate() < cumpleanos.getDate())) {
+    edad--;
+  }
+  return edad;
+};
+
 export default function Alumnos() {
   const [alumnos, setAlumnos] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -66,6 +81,7 @@ export default function Alumnos() {
     nombre: '',
     apellidos: '',
     telefono_padres: '',
+    fecha_nacimiento: '',
     cinturon: 'Blanco',
     horario_id: ''
   });
@@ -194,7 +210,7 @@ export default function Alumnos() {
 
       // Close modal, clear form, refresh data
       setIsModalOpen(false);
-      setFormData({ nombre: '', apellidos: '', telefono_padres: '', disciplina: 'Taekwondo', cinturon: 'Blanco', horario_id: '' });
+      setFormData({ nombre: '', apellidos: '', telefono_padres: '', fecha_nacimiento: '', disciplina: 'Taekwondo', cinturon: 'Blanco', horario_id: '' });
       setEditId(null);
       await fetchAlumnos();
     } catch (error) {
@@ -363,7 +379,7 @@ export default function Alumnos() {
 
   const openNewModal = () => {
     setEditId(null);
-    setFormData({ nombre: '', apellidos: '', telefono_padres: '', disciplina: 'Taekwondo', cinturon: 'Blanco', horario_id: '' });
+    setFormData({ nombre: '', apellidos: '', telefono_padres: '', fecha_nacimiento: '', disciplina: 'Taekwondo', cinturon: 'Blanco', horario_id: '' });
     setIsModalOpen(true);
   };
 
@@ -373,6 +389,7 @@ export default function Alumnos() {
       nombre: alumno.nombre,
       apellidos: alumno.apellidos,
       telefono_padres: alumno.telefono_padres,
+      fecha_nacimiento: alumno.fecha_nacimiento || '',
       disciplina: alumno.disciplina || 'Taekwondo',
       cinturon: alumno.cinturon,
       horario_id: alumno.horario_id || ''
@@ -671,11 +688,21 @@ export default function Alumnos() {
                       <td className="px-8 py-5">
                         <div className="flex flex-col">
                           <div className="font-semibold text-slate-900 dark:text-white transition-colors duration-300">{alumno.nombre} {alumno.apellidos}</div>
-                          <div className="flex items-center gap-1.5 mt-1">
-                            <span className={`w-1.5 h-1.5 rounded-full ${(alumno.disciplina || 'Taekwondo') === 'Muay Thai' ? 'bg-red-500' : 'bg-blue-500'}`}></span>
-                            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
-                              {alumno.disciplina || 'Taekwondo'}
-                            </span>
+                          <div className="flex items-center gap-2 mt-1">
+                            <div className="flex items-center gap-1.5">
+                              <span className={`w-1.5 h-1.5 rounded-full ${(alumno.disciplina || 'Taekwondo') === 'Muay Thai' ? 'bg-red-500' : 'bg-blue-500'}`}></span>
+                              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+                                {alumno.disciplina || 'Taekwondo'}
+                              </span>
+                            </div>
+                            {alumno.fecha_nacimiento && (
+                              <>
+                                <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-600"></span>
+                                <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                                  {calcularEdad(alumno.fecha_nacimiento)} años
+                                </span>
+                              </>
+                            )}
                           </div>
                         </div>
                       </td>
@@ -878,54 +905,72 @@ export default function Alumnos() {
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-2">
-                  <label className="text-xs uppercase tracking-widest text-slate-700 dark:text-white/80 font-medium ml-1 transition-colors duration-500">Teléfono (Padres/Tutor)</label>
-                  <input
-                    type="tel"
-                    name="telefono_padres"
-                    value={formData.telefono_padres}
-                    onChange={handleInputChange}
-                    disabled={saving}
-                    required
-                    className={`w-full bg-slate-50 border text-slate-900 focus:bg-white dark:bg-white/5 dark:text-white rounded-xl px-4 py-3 focus:outline-none focus:border-red-500 dark:focus:bg-white/10 transition-all duration-300 ease-in-out disabled:opacity-50 ${formErrors.telefono_padres ? 'border-red-500' : 'border-slate-200 dark:border-white/10'}`}
-                  />
-                  {formErrors.telefono_padres && (
-                    <span className="text-[10px] text-red-500 font-medium tracking-wide animate-in fade-in slide-in-from-top-1 ml-1">
-                      {formErrors.telefono_padres}
-                    </span>
-                  )}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-2">
+                    <label className="text-xs uppercase tracking-widest text-slate-700 dark:text-white/80 font-medium ml-1 transition-colors duration-500">Teléfono</label>
+                    <input
+                      type="tel"
+                      name="telefono_padres"
+                      value={formData.telefono_padres}
+                      onChange={handleInputChange}
+                      disabled={saving}
+                      required
+                      className={`w-full bg-slate-50 border text-slate-900 focus:bg-white dark:bg-white/5 dark:text-white rounded-xl px-4 py-3 focus:outline-none focus:border-red-500 dark:focus:bg-white/10 transition-all duration-300 ease-in-out disabled:opacity-50 ${formErrors.telefono_padres ? 'border-red-500' : 'border-slate-200 dark:border-white/10'}`}
+                    />
+                    {formErrors.telefono_padres && (
+                      <span className="text-[10px] text-red-500 font-medium tracking-wide animate-in fade-in slide-in-from-top-1 ml-1">
+                        {formErrors.telefono_padres}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    <label className="text-xs uppercase tracking-widest text-slate-700 dark:text-white/80 font-medium ml-1 transition-colors duration-500">Nacimiento</label>
+                    <input
+                      type="date"
+                      name="fecha_nacimiento"
+                      value={formData.fecha_nacimiento}
+                      onChange={handleInputChange}
+                      disabled={saving}
+                      className="w-full bg-slate-50 border border-slate-200 text-slate-900 focus:bg-white dark:bg-white/5 dark:text-white dark:border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-red-500 dark:focus:bg-white/10 transition-all duration-300 ease-in-out disabled:opacity-50 [color-scheme:light] dark:[color-scheme:dark]"
+                    />
+                  </div>
                 </div>
 
-                <div className="flex flex-col gap-2">
-                  <label className="text-xs uppercase tracking-widest text-slate-700 dark:text-white/80 font-medium ml-1 transition-colors duration-500">Disciplina</label>
-                  <select
-                    name="disciplina"
-                    value={formData.disciplina}
-                    onChange={(e) => {
-                      const newDisc = e.target.value;
-                      const newGrados = getGradosByDisciplina(newDisc);
-                      setFormData({ ...formData, disciplina: newDisc, cinturon: newGrados[0] });
-                    }}
-                    disabled={saving}
-                    className="w-full mb-4 bg-slate-50 border border-slate-200 text-slate-900 dark:bg-slate-800 dark:border-white/10 dark:text-white rounded-xl px-4 py-3 focus:outline-none focus:border-red-500 transition-all duration-300 ease-in-out disabled:opacity-50 appearance-none"
-                  >
-                    {DISCIPLINAS.map(d => (
-                      <option key={d} value={d}>{d}</option>
-                    ))}
-                  </select>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-2">
+                    <label className="text-xs uppercase tracking-widest text-slate-700 dark:text-white/80 font-medium ml-1 transition-colors duration-500">Disciplina</label>
+                    <select
+                      name="disciplina"
+                      value={formData.disciplina}
+                      onChange={(e) => {
+                        const newDisc = e.target.value;
+                        const newGrados = getGradosByDisciplina(newDisc);
+                        setFormData({ ...formData, disciplina: newDisc, cinturon: newGrados[0] });
+                      }}
+                      disabled={saving}
+                      className="w-full bg-slate-50 border border-slate-200 text-slate-900 dark:bg-slate-800 dark:border-white/10 dark:text-white rounded-xl px-4 py-3 focus:outline-none focus:border-red-500 transition-all duration-300 ease-in-out disabled:opacity-50 appearance-none"
+                    >
+                      {DISCIPLINAS.map(d => (
+                        <option key={d} value={d}>{d}</option>
+                      ))}
+                    </select>
+                  </div>
 
-                  <label className="text-xs uppercase tracking-widest text-slate-700 dark:text-white/80 font-medium ml-1 transition-colors duration-500">Grado Actual</label>
-                  <select
-                    name="cinturon"
-                    value={formData.cinturon}
-                    onChange={handleInputChange}
-                    disabled={saving}
-                    className="w-full bg-slate-50 border border-slate-200 text-slate-900 dark:bg-slate-800 dark:border-white/10 dark:text-white rounded-xl px-4 py-3 focus:outline-none focus:border-red-500 transition-all duration-300 ease-in-out disabled:opacity-50 appearance-none"
-                  >
-                    {getGradosByDisciplina(formData.disciplina || 'Taekwondo').map(c => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
-                  </select>
+                  <div className="flex flex-col gap-2">
+                    <label className="text-xs uppercase tracking-widest text-slate-700 dark:text-white/80 font-medium ml-1 transition-colors duration-500">Grado Actual</label>
+                    <select
+                      name="cinturon"
+                      value={formData.cinturon}
+                      onChange={handleInputChange}
+                      disabled={saving}
+                      className="w-full bg-slate-50 border border-slate-200 text-slate-900 dark:bg-slate-800 dark:border-white/10 dark:text-white rounded-xl px-4 py-3 focus:outline-none focus:border-red-500 transition-all duration-300 ease-in-out disabled:opacity-50 appearance-none"
+                    >
+                      {getGradosByDisciplina(formData.disciplina || 'Taekwondo').map(c => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
 
                 <div className="flex flex-col gap-2">
