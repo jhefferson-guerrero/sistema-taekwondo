@@ -254,17 +254,17 @@ export default function Dashboard() {
                         dataKey="name" 
                         axisLine={false}
                         tickLine={false}
-                        tick={{ fill: '#64748b', fontSize: 12, fontWeight: 500 }}
+                        tick={{ fill: 'currentColor', fontSize: 12, fontWeight: 500 }}
                         dy={10}
-                        className="dark:opacity-70 transition-opacity duration-500"
+                        className="text-neutral-500 dark:text-neutral-400 transition-colors duration-500"
                       />
                       <YAxis 
                         axisLine={false}
                         tickLine={false}
                         width={65}
-                        tick={{ fill: '#64748b', fontSize: 12, fontWeight: 500 }}
+                        tick={{ fill: 'currentColor', fontSize: 12, fontWeight: 500 }}
                         tickFormatter={(value) => `S/ ${value}`}
-                        className="dark:opacity-70 transition-opacity duration-500"
+                        className="text-neutral-500 dark:text-neutral-400 transition-colors duration-500"
                       />
                       <Tooltip 
                         content={({ active, payload }) => {
