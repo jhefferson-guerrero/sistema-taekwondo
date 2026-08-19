@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { supabase } from '../services/supabaseClient';
 import { DISCIPLINAS, getGradosByDisciplina } from '../utils/constants';
-import { Plus, Users, X, Loader2, Calendar, Edit2, Trash2, AlertCircle, Search, Filter, Eye, ChevronLeft, ChevronRight, Snowflake, Sun, RefreshCcw, Activity, Download } from 'lucide-react';
+import { Plus, Users, X, Loader2, Calendar, Edit2, Trash2, AlertCircle, Search, Filter, Eye, ChevronLeft, ChevronRight, Snowflake, Sun, RefreshCcw, Activity, Download, MoreVertical } from 'lucide-react';
 import { calcularClasesRestantes, FERIADOS_PERU } from '../utils/membresiaUtils';
 import { generarHistorialPDF } from '../utils/pdfGenerator';
 import Pagination from '../components/Pagination';
@@ -22,6 +22,17 @@ export default function Alumnos() {
   const cinturones = getGradosByDisciplina(disciplinaFilter === 'Todos' ? 'Taekwondo' : disciplinaFilter);
   const [statusFilter, setStatusFilter] = useState('Activo');
   const [horariosDisponibles, setHorariosDisponibles] = useState([]);
+  const [openMenuId, setOpenMenuId] = useState(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!event.target.closest('.action-menu-container')) {
+        setOpenMenuId(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Profile Modal State
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -717,25 +728,39 @@ export default function Alumnos() {
                               >
                                 <Edit2 className="w-[18px] h-[18px] transition-transform duration-300 hover:scale-110" />
                               </button>
-                              <button
-                                onClick={() => setDeleteId(alumno.id)}
-                                className="p-2 text-slate-500 hover:text-red-600 dark:text-white/60 dark:hover:text-red-500 transition-all duration-300 ease-in-out rounded-lg hover:bg-slate-200 dark:hover:bg-white/10"
-                                title="Desactivar"
-                              >
-                                <Trash2 className="w-[18px] h-[18px] transition-transform duration-300 hover:scale-110" />
-                              </button>
-                              <button
-                                onClick={() => handleDownloadPDF(alumno)}
-                                disabled={generatingPdfId === alumno.id}
-                                className="p-2 text-slate-500 hover:text-red-600 dark:text-white/60 dark:hover:text-red-500 transition-all duration-300 ease-in-out rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10"
-                                title="Descargar Historial (PDF)"
-                              >
-                                {generatingPdfId === alumno.id ? (
-                                  <Loader2 className="w-[18px] h-[18px] animate-spin" />
-                                ) : (
-                                  <Download className="w-[18px] h-[18px] transition-transform duration-300 hover:-translate-y-1" />
+                              
+                              <div className="relative action-menu-container">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setOpenMenuId(openMenuId === alumno.id ? null : alumno.id);
+                                  }}
+                                  className="p-2 text-slate-500 hover:text-slate-900 dark:text-white/60 dark:hover:text-white transition-all duration-300 ease-in-out rounded-lg hover:bg-slate-200 dark:hover:bg-white/10"
+                                >
+                                  <MoreVertical className="w-[18px] h-[18px] transition-transform duration-300 hover:scale-110" />
+                                </button>
+                                
+                                {openMenuId === alumno.id && (
+                                  <div className="absolute right-8 mt-[-10px] w-48 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-100 dark:border-white/10 py-1 z-50 animate-in fade-in zoom-in-95 duration-200">
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); handleDownloadPDF(alumno); setOpenMenuId(null); }}
+                                      disabled={generatingPdfId === alumno.id}
+                                      className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-white/80 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors flex items-center gap-2"
+                                    >
+                                      {generatingPdfId === alumno.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                                      Descargar PDF
+                                    </button>
+                                    <div className="h-px bg-slate-100 dark:bg-white/10 my-1"></div>
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); setDeleteId(alumno.id); setOpenMenuId(null); }}
+                                      className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors flex items-center gap-2 font-medium"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                      Desactivar
+                                    </button>
+                                  </div>
                                 )}
-                              </button>
+                              </div>
                             </>
                           ) : (
                             <>
@@ -748,14 +773,31 @@ export default function Alumnos() {
                                 <RefreshCcw className="w-[18px] h-[18px] transition-transform duration-300 hover:rotate-180" />
                                 <span className="text-sm font-semibold hidden sm:inline">Restaurar</span>
                               </button>
-                              <button
-                                onClick={() => setHardDeleteId(alumno.id)}
-                                disabled={deleting}
-                                className="p-2 text-slate-500 hover:text-red-600 dark:text-white/60 dark:hover:text-red-500 transition-all duration-300 ease-in-out rounded-lg hover:bg-slate-200 dark:hover:bg-white/10 flex items-center gap-2"
-                                title="Eliminar Definitivamente"
-                              >
-                                <Trash2 className="w-[18px] h-[18px] transition-transform duration-300 hover:scale-110" />
-                              </button>
+                              
+                              <div className="relative action-menu-container">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setOpenMenuId(openMenuId === alumno.id ? null : alumno.id);
+                                  }}
+                                  className="p-2 text-slate-500 hover:text-slate-900 dark:text-white/60 dark:hover:text-white transition-all duration-300 ease-in-out rounded-lg hover:bg-slate-200 dark:hover:bg-white/10"
+                                >
+                                  <MoreVertical className="w-[18px] h-[18px] transition-transform duration-300 hover:scale-110" />
+                                </button>
+                                
+                                {openMenuId === alumno.id && (
+                                  <div className="absolute right-8 mt-[-10px] w-48 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-100 dark:border-white/10 py-1 z-50 animate-in fade-in zoom-in-95 duration-200">
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); setHardDeleteId(alumno.id); setOpenMenuId(null); }}
+                                      disabled={deleting}
+                                      className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors flex items-center gap-2 font-medium"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                      Eliminar Definitivo
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
                             </>
                           )}
                         </div>
