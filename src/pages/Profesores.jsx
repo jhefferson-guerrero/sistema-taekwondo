@@ -92,7 +92,7 @@ export default function Profesores() {
           *,
           horarios (
             id, nombre, dias, hora_inicio, hora_fin,
-            alumnos ( id, nombre, apellidos, disciplina, estado, pagos(fecha_vencimiento) )
+            alumnos ( id, nombre, apellidos, disciplina, estado, cinturon )
           )
         `)
         .eq('id', profesor.id)
@@ -486,25 +486,7 @@ export default function Profesores() {
                                 const todayTime = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
 
                                 let alumnosActivos = (selectedHorarioView.alumnos || [])
-                                  .filter(a => a.estado !== 'Inactivo')
-                                  .map(a => {
-                                    let paymentStatus = 'none';
-                                    if (a.pagos && a.pagos.length > 0) {
-                                      const latestPago = [...a.pagos].sort((x, y) => new Date(y.fecha_vencimiento) - new Date(x.fecha_vencimiento))[0];
-                                      const vDate = new Date(latestPago.fecha_vencimiento + 'T00:00:00');
-                                      const vTime = vDate.getTime();
-                                      const diffDays = Math.ceil((vTime - todayTime) / (1000 * 60 * 60 * 24));
-
-                                      if (diffDays < 0) {
-                                        paymentStatus = 'expired';
-                                      } else if (diffDays <= 5) {
-                                        paymentStatus = 'warning';
-                                      } else {
-                                        paymentStatus = 'ok';
-                                      }
-                                    }
-                                    return { ...a, paymentStatus };
-                                  });
+                                  .filter(a => a.estado !== 'Inactivo');
 
                                 if (detailsSearchTerm) {
                                   alumnosActivos = alumnosActivos.filter(a => {
@@ -529,26 +511,9 @@ export default function Profesores() {
                                           <span className="truncate">{alumno.nombre} {alumno.apellidos}</span>
                                         </div>
                                         <div className="pl-3.5 sm:pl-0 flex-shrink-0">
-                                          {alumno.paymentStatus === 'ok' && (
-                                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20">
-                                              Al Día
-                                            </span>
-                                          )}
-                                          {alumno.paymentStatus === 'warning' && (
-                                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-600 border border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20">
-                                              Por Vencer
-                                            </span>
-                                          )}
-                                          {alumno.paymentStatus === 'expired' && (
-                                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-red-50 text-red-600 border border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/20">
-                                              Vencido
-                                            </span>
-                                          )}
-                                          {alumno.paymentStatus === 'none' && (
-                                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-slate-50 text-slate-500 border border-slate-200 dark:bg-white/5 dark:text-slate-400 dark:border-white/10">
-                                              Sin Pagos
-                                            </span>
-                                          )}
+                                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-slate-50 text-slate-600 border border-slate-200 dark:bg-white/5 dark:text-slate-300 dark:border-white/10">
+                                            {alumno.cinturon || 'Blanco'}
+                                          </span>
                                         </div>
                                       </div>
                                     ))}
