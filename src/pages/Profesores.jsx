@@ -225,10 +225,18 @@ export default function Profesores() {
             <Loader2 className="w-8 h-8 animate-spin text-red-600 dark:text-white/60" />
           </div>
         ) : filteredProfesores.length === 0 ? (
-          <div className="text-center py-20 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-white/5">
-            <GraduationCap className="w-12 h-12 text-slate-300 dark:text-white/20 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-slate-900 dark:text-white">No hay profesores</h3>
-            <p className="text-slate-500 dark:text-white/60 mt-1">Registra tu primer instructor.</p>
+          <div className="p-1.5 bg-slate-50/80 dark:bg-white/[0.02] border border-slate-300 dark:border-white/20 border-t-[4px] border-t-red-600 dark:border-t-red-600 rounded-[2rem] shadow-[0_12px_40px_-12px_rgba(0,0,0,0.15)] dark:shadow-[0_12px_40px_-12px_rgba(255,255,255,0.05)] backdrop-blur-xl transition-all duration-700 w-full overflow-hidden flex flex-col mt-4">
+            <div className="bg-white dark:bg-slate-800 rounded-[calc(2rem-0.375rem)] flex-1 shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] flex flex-col w-full relative min-h-[400px] transition-colors duration-500 items-center justify-center text-center p-8">
+              <div className="w-20 h-20 rounded-full bg-slate-100 border border-slate-200 dark:bg-white/5 dark:border-white/10 flex items-center justify-center mb-6 transition-colors duration-500">
+                <GraduationCap className="w-8 h-8 text-slate-400 dark:text-white/30" strokeWidth={1.5} />
+              </div>
+              <h3 className="text-xl font-semibold text-slate-900 dark:text-white tracking-tight transition-colors duration-500">
+                No hay profesores
+              </h3>
+              <p className="text-slate-500 dark:text-white/60 mt-2 max-w-sm text-sm transition-colors duration-500">
+                Registra tu primer instructor.
+              </p>
+            </div>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in duration-700">
