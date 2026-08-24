@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabaseClient';
 import { Loader2, TrendingUp, Users, AlertTriangle, Calendar } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
 
   // KPIs
@@ -172,7 +174,10 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
               {/* Tarjeta 1: Ingresos */}
-              <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 p-1.5 bg-slate-50/80 dark:bg-white/[0.02] border border-slate-300 dark:border-white/20 rounded-[2rem] shadow-[0_12px_40px_-12px_rgba(0,0,0,0.15)] dark:shadow-[0_12px_40px_-12px_rgba(255,255,255,0.05)] backdrop-blur-xl group hover:-translate-y-1 hover:shadow-[0_20px_40px_-12px_rgba(0,0,0,0.2)] hover:dark:shadow-[0_20px_40px_-12px_rgba(255,255,255,0.1)] transition-all ease-[cubic-bezier(0.32,0.72,0,1)]">
+              <div 
+                onClick={() => navigate('/dashboard/pagos')}
+                className="animate-in fade-in slide-in-from-bottom-4 duration-700 p-1.5 bg-slate-50/80 dark:bg-white/[0.02] border border-slate-300 dark:border-white/20 rounded-[2rem] shadow-[0_12px_40px_-12px_rgba(0,0,0,0.15)] dark:shadow-[0_12px_40px_-12px_rgba(255,255,255,0.05)] backdrop-blur-xl group hover:-translate-y-1 hover:shadow-[0_20px_40px_-12px_rgba(0,0,0,0.2)] hover:dark:shadow-[0_20px_40px_-12px_rgba(255,255,255,0.1)] transition-all ease-[cubic-bezier(0.32,0.72,0,1)] cursor-pointer"
+              >
                 <div className="p-6 bg-white dark:bg-slate-800 rounded-[calc(2rem-0.375rem)] shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] flex flex-col gap-4 h-full relative overflow-hidden transition-colors duration-500">
                   <div className="flex justify-between items-start">
                     <h3 className="text-slate-700 dark:text-white/80 text-xs font-semibold tracking-[0.15em] uppercase">Ingresos del Mes</h3>
@@ -188,7 +193,10 @@ export default function Dashboard() {
               </div>
 
               {/* Tarjeta 2: Alumnos Registrados */}
-              <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100 p-1.5 bg-slate-50/80 dark:bg-white/[0.02] border border-slate-300 dark:border-white/20 rounded-[2rem] shadow-[0_12px_40px_-12px_rgba(0,0,0,0.15)] dark:shadow-[0_12px_40px_-12px_rgba(255,255,255,0.05)] backdrop-blur-xl group hover:-translate-y-1 hover:shadow-[0_20px_40px_-12px_rgba(0,0,0,0.2)] hover:dark:shadow-[0_20px_40px_-12px_rgba(255,255,255,0.1)] transition-all ease-[cubic-bezier(0.32,0.72,0,1)] fill-mode-both">
+              <div 
+                onClick={() => navigate('/dashboard/alumnos')}
+                className="animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100 p-1.5 bg-slate-50/80 dark:bg-white/[0.02] border border-slate-300 dark:border-white/20 rounded-[2rem] shadow-[0_12px_40px_-12px_rgba(0,0,0,0.15)] dark:shadow-[0_12px_40px_-12px_rgba(255,255,255,0.05)] backdrop-blur-xl group hover:-translate-y-1 hover:shadow-[0_20px_40px_-12px_rgba(0,0,0,0.2)] hover:dark:shadow-[0_20px_40px_-12px_rgba(255,255,255,0.1)] transition-all ease-[cubic-bezier(0.32,0.72,0,1)] fill-mode-both cursor-pointer"
+              >
                 <div className="p-6 bg-white dark:bg-slate-800 rounded-[calc(2rem-0.375rem)] shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] flex flex-col gap-4 h-full relative overflow-hidden transition-colors duration-500">
                   <div className="flex justify-between items-start">
                     <h3 className="text-slate-700 dark:text-white/80 text-xs font-semibold tracking-[0.15em] uppercase">Alumnos Registrados</h3>
@@ -203,7 +211,10 @@ export default function Dashboard() {
               </div>
 
               {/* Tarjeta 3: Mensualidades Vencidas */}
-              <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200 p-1.5 bg-slate-50/80 dark:bg-white/[0.02] border border-slate-300 dark:border-white/20 rounded-[2rem] shadow-[0_12px_40px_-12px_rgba(0,0,0,0.15)] dark:shadow-[0_12px_40px_-12px_rgba(255,255,255,0.05)] backdrop-blur-xl group hover:-translate-y-1 hover:shadow-[0_20px_40px_-12px_rgba(0,0,0,0.2)] hover:dark:shadow-[0_20px_40px_-12px_rgba(255,255,255,0.1)] transition-all ease-[cubic-bezier(0.32,0.72,0,1)] fill-mode-both">
+              <div 
+                onClick={() => navigate('/dashboard/alumnos')}
+                className="animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200 p-1.5 bg-slate-50/80 dark:bg-white/[0.02] border border-slate-300 dark:border-white/20 rounded-[2rem] shadow-[0_12px_40px_-12px_rgba(0,0,0,0.15)] dark:shadow-[0_12px_40px_-12px_rgba(255,255,255,0.05)] backdrop-blur-xl group hover:-translate-y-1 hover:shadow-[0_20px_40px_-12px_rgba(0,0,0,0.2)] hover:dark:shadow-[0_20px_40px_-12px_rgba(255,255,255,0.1)] transition-all ease-[cubic-bezier(0.32,0.72,0,1)] fill-mode-both cursor-pointer"
+              >
                 <div className="p-6 bg-white dark:bg-slate-800 rounded-[calc(2rem-0.375rem)] shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] flex flex-col gap-4 h-full relative overflow-hidden transition-colors duration-500">
                   <div className="flex justify-between items-start">
                     <h3 className="text-slate-700 dark:text-white/80 text-xs font-semibold tracking-[0.15em] uppercase">Mensualidades Vencidas</h3>

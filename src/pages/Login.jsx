@@ -59,7 +59,7 @@ export default function Login() {
           </div>
           <div className="flex flex-col items-center">
             <span className="text-sm font-medium tracking-[0.2em] uppercase text-slate-700 dark:text-white/80 text-center">Admin Portal</span>
-            <h1 className="text-2xl font-bold tracking-tight text-center text-slate-900 dark:text-white transition-colors duration-500">Taekwondo Fertex</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-center text-slate-900 dark:text-white transition-colors duration-500">FERTEX</h1>
           </div>
         </div>
 

@@ -83,7 +83,9 @@ export default function Alumnos() {
     telefono_padres: '',
     fecha_nacimiento: '',
     cinturon: 'Blanco',
-    horario_id: ''
+    horario_id: '',
+    nombre_apoderado: '',
+    parentesco_apoderado: ''
   });
   const [saving, setSaving] = useState(false);
   const [formErrors, setFormErrors] = useState({});
@@ -379,7 +381,7 @@ export default function Alumnos() {
 
   const openNewModal = () => {
     setEditId(null);
-    setFormData({ nombre: '', apellidos: '', telefono_padres: '', fecha_nacimiento: '', disciplina: 'Taekwondo', cinturon: 'Blanco', horario_id: '' });
+    setFormData({ nombre: '', apellidos: '', telefono_padres: '', fecha_nacimiento: '', disciplina: 'Taekwondo', cinturon: 'Blanco', horario_id: '', nombre_apoderado: '', parentesco_apoderado: '' });
     setIsModalOpen(true);
   };
 
@@ -392,7 +394,9 @@ export default function Alumnos() {
       fecha_nacimiento: alumno.fecha_nacimiento || '',
       disciplina: alumno.disciplina || 'Taekwondo',
       cinturon: alumno.cinturon,
-      horario_id: alumno.horario_id || ''
+      horario_id: alumno.horario_id || '',
+      nombre_apoderado: alumno.nombre_apoderado || '',
+      parentesco_apoderado: alumno.parentesco_apoderado || ''
     });
     setIsModalOpen(true);
   };
@@ -677,13 +681,14 @@ export default function Alumnos() {
                   <tr className="border-b border-slate-200 dark:border-white/10 transition-colors duration-500">
                     <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-700 dark:text-white/80">Nombre Completo</th>
                     <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-700 dark:text-white/80 text-center">Teléfono</th>
+                    <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-700 dark:text-white/80 text-center">Apoderado</th>
                     <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-700 dark:text-white/80 text-center">Registro</th>
                     <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-700 dark:text-white/80 text-center">Estado Pago</th>
                     <th className="px-8 py-5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-700 dark:text-white/80 text-center">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 dark:divide-white/5 transition-all duration-300 ease-in-out">
-                  {currentAlumnos.map((alumno) => (
+                  {currentAlumnos.map((alumno, index) => (
                     <tr key={alumno.id} className="hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-all duration-300 ease-in-out group">
                       <td className="px-8 py-5">
                         <div className="flex flex-col">
@@ -708,6 +713,15 @@ export default function Alumnos() {
                       </td>
                       <td className="px-8 py-5 text-center">
                         <div className="font-medium text-slate-700 dark:text-white/90 transition-colors duration-300">{alumno.telefono_padres}</div>
+                      </td>
+                      <td className="px-8 py-5 text-center">
+                        {alumno.nombre_apoderado ? (
+                          <div className="font-medium text-slate-700 dark:text-white/90 transition-colors duration-300">
+                            {alumno.nombre_apoderado} ({alumno.parentesco_apoderado})
+                          </div>
+                        ) : (
+                          <span className="text-slate-400 dark:text-white/30 font-medium">-</span>
+                        )}
                       </td>
                       <td className="px-8 py-5 text-center">
                         <div className="inline-flex items-center gap-2 text-slate-700 dark:text-white/80 text-sm">
@@ -768,7 +782,7 @@ export default function Alumnos() {
                                 </button>
                                 
                                 {openMenuId === alumno.id && (
-                                  <div className="absolute right-8 mt-[-10px] w-48 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-100 dark:border-white/10 py-1 z-50 animate-in fade-in zoom-in-95 duration-200">
+                                  <div className={`absolute right-8 w-48 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-100 dark:border-white/10 py-1 z-50 animate-in fade-in zoom-in-95 duration-200 ${index >= currentAlumnos.length - 2 && currentAlumnos.length > 2 ? 'bottom-full mb-2 origin-bottom-right' : 'mt-[-10px] origin-top-right'}`}>
                                     <button
                                       onClick={(e) => { e.stopPropagation(); handleDownloadPDF(alumno); setOpenMenuId(null); }}
                                       disabled={generatingPdfId === alumno.id}
@@ -813,7 +827,7 @@ export default function Alumnos() {
                                 </button>
                                 
                                 {openMenuId === alumno.id && (
-                                  <div className="absolute right-8 mt-[-10px] w-48 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-100 dark:border-white/10 py-1 z-50 animate-in fade-in zoom-in-95 duration-200">
+                                  <div className={`absolute right-8 w-48 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-100 dark:border-white/10 py-1 z-50 animate-in fade-in zoom-in-95 duration-200 ${index >= currentAlumnos.length - 2 && currentAlumnos.length > 2 ? 'bottom-full mb-2 origin-bottom-right' : 'mt-[-10px] origin-top-right'}`}>
                                     <button
                                       onClick={(e) => { e.stopPropagation(); setHardDeleteId(alumno.id); setOpenMenuId(null); }}
                                       disabled={deleting}
@@ -936,6 +950,42 @@ export default function Alumnos() {
                     />
                   </div>
                 </div>
+
+                {(() => {
+                  const edadActual = calcularEdad(formData.fecha_nacimiento);
+                  const requiereApoderado = edadActual !== null && edadActual < 18;
+                  if (!requiereApoderado) return null;
+                  return (
+                    <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2">
+                      <div className="flex flex-col gap-2">
+                        <label className="text-xs uppercase tracking-widest text-slate-700 dark:text-white/80 font-medium ml-1 transition-colors duration-500">Nombre del Apoderado</label>
+                        <input
+                          type="text"
+                          name="nombre_apoderado"
+                          value={formData.nombre_apoderado}
+                          onChange={handleInputChange}
+                          disabled={saving}
+                          required
+                          placeholder="Ej. Juan Pérez"
+                          className="w-full bg-slate-50 border border-slate-200 text-slate-900 focus:bg-white dark:bg-white/5 dark:text-white dark:border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-red-500 dark:focus:bg-white/10 transition-all duration-300 ease-in-out disabled:opacity-50"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <label className="text-xs uppercase tracking-widest text-slate-700 dark:text-white/80 font-medium ml-1 transition-colors duration-500">Parentesco</label>
+                        <input
+                          type="text"
+                          name="parentesco_apoderado"
+                          value={formData.parentesco_apoderado}
+                          onChange={handleInputChange}
+                          disabled={saving}
+                          required
+                          placeholder="Ej. Padre, Madre"
+                          className="w-full bg-slate-50 border border-slate-200 text-slate-900 focus:bg-white dark:bg-white/5 dark:text-white dark:border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-red-500 dark:focus:bg-white/10 transition-all duration-300 ease-in-out disabled:opacity-50"
+                        />
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="flex flex-col gap-2">
@@ -1186,7 +1236,7 @@ export default function Alumnos() {
                     </h3>
                   </div>
 
-                  <div className="bg-slate-50/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-3xl p-5">
+                  <div className="bg-slate-50/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-3xl p-4">
                     {/* Controles de navegacion de mes */}
                     <div className="flex items-center justify-between mb-4">
                       <button
@@ -1207,14 +1257,14 @@ export default function Alumnos() {
                     </div>
 
                     {/* Dias de la semana */}
-                    <div className="grid grid-cols-7 gap-2 mb-4">
+                    <div className="grid grid-cols-7 gap-1.5 mb-3">
                       {['L', 'M', 'X', 'J', 'V', 'S', 'D'].map(d => (
                         <div key={d} className="text-center text-[10px] uppercase font-bold text-slate-400 dark:text-white/30">{d}</div>
                       ))}
                     </div>
 
                     {/* Cuadricula del Mes */}
-                    <div className="grid grid-cols-7 gap-2 min-h-[260px] sm:min-h-[280px] content-start">
+                    <div className="grid grid-cols-7 gap-1.5 min-h-[200px] sm:min-h-[220px] content-start">
                       {(() => {
                         const year = currentMonth.getFullYear();
                         const month = currentMonth.getMonth();
@@ -1239,7 +1289,7 @@ export default function Alumnos() {
 
                         // Empty slots before 1st of month
                         for (let i = 0; i < startOffset; i++) {
-                          cells.push(<div key={`empty-${i}`} className="w-8 h-8 sm:w-9 sm:h-9 mx-auto rounded-xl" />);
+                          cells.push(<div key={`empty-${i}`} className="w-7 h-7 sm:w-8 sm:h-8 mx-auto rounded-lg" />);
                         }
 
                         // Days of month
@@ -1293,11 +1343,11 @@ export default function Alumnos() {
                           cells.push(
                             <div
                               key={`day-${d}`}
-                              className={`w-8 h-8 sm:w-9 sm:h-9 mx-auto flex items-center justify-center rounded-lg border transition-colors duration-300 ${bgColor} ${borderColor}`}
+                              className={`w-7 h-7 sm:w-8 sm:h-8 mx-auto flex items-center justify-center rounded-lg border transition-colors duration-300 ${bgColor} ${borderColor}`}
                               title={estadoAsistencia === 'Congelado' ? `${dateStr} - Congelado` : dateStr}
                             >
-                              <span className={`text-xs sm:text-sm ${textColor}`}>
-                                {estadoAsistencia === 'Congelado' ? <Snowflake className="w-4 h-4" /> : d}
+                              <span className={`text-[10px] sm:text-xs font-semibold ${textColor}`}>
+                                {estadoAsistencia === 'Congelado' ? <Snowflake className="w-3 h-3" /> : d}
                               </span>
                             </div>
                           );

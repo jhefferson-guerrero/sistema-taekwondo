@@ -57,7 +57,7 @@ export const generarHistorialPDF = async (alumnoId) => {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(22);
     doc.setTextColor(...brandRed);
-    doc.text('Taekwondo Fertex', 14, 20);
+    doc.text('FERTEX', 14, 20);
 
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(10);
@@ -88,6 +88,9 @@ export const generarHistorialPDF = async (alumnoId) => {
     doc.text(`Grado/Cinturón: ${alumno.cinturon}`, 14, 68);
     doc.text(`Teléfono: ${alumno.telefono_padres || 'No registrado'}`, 105, 56);
     doc.text(`Fecha de Ingreso: ${alumno.fecha_registro ? new Date(alumno.fecha_registro).toLocaleDateString() : 'N/A'}`, 105, 62);
+    if (alumno.nombre_apoderado) {
+      doc.text(`Apoderado: ${alumno.nombre_apoderado} (${alumno.parentesco_apoderado})`, 105, 68);
+    }
 
     // --- RESUMEN DEL MES ACTUAL ---
     let startY = 80;
@@ -206,7 +209,7 @@ export const generarHistorialPDF = async (alumnoId) => {
       doc.setFontSize(8);
       doc.setTextColor(148, 163, 184);
       doc.text(
-        `Documento generado automáticamente por el Sistema Taekwondo Fertex - Página ${i} de ${pageCount}`,
+        `Documento generado automáticamente por el Sistema FERTEX - Página ${i} de ${pageCount}`,
         doc.internal.pageSize.getWidth() / 2,
         doc.internal.pageSize.getHeight() - 10,
         { align: 'center' }
