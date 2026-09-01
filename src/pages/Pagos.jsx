@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { supabase } from '../services/supabaseClient';
-import { DISCIPLINAS } from '../utils/constants';
+import { DISCIPLINAS, getDisciplinaColor } from '../utils/constants';
 import { Search, Filter, Plus, Minus, X, Calendar, DollarSign, CreditCard, CheckCircle, XCircle, ArrowRight, Clock, FileText, User, Receipt, Edit2, Trash2, Loader2, AlertCircle, Activity } from 'lucide-react';
 import Pagination from '../components/Pagination';
 
@@ -337,7 +337,7 @@ export default function Pagos() {
                         <div className="flex flex-col">
                           <div className="font-semibold text-slate-900 dark:text-white transition-colors duration-300">{pago.alumnos?.nombre} {pago.alumnos?.apellidos}</div>
                           <div className="flex items-center gap-1.5 mt-1">
-                            <span className={`w-1.5 h-1.5 rounded-full ${(pago.alumnos?.disciplina || 'Taekwondo') === 'Muay Thai' ? 'bg-red-500' : 'bg-blue-500'}`}></span>
+                            <span className={`w-1.5 h-1.5 rounded-full ${getDisciplinaColor(pago.alumnos?.disciplina || 'Taekwondo')}`}></span>
                             <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
                               {pago.alumnos?.disciplina || 'Taekwondo'}
                             </span>

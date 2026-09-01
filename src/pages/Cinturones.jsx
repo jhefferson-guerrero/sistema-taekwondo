@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { supabase } from '../services/supabaseClient';
 import { Search, Filter, Award, Loader2, X, Users, History, ArrowUpCircle, Trash2, AlertCircle, Activity } from 'lucide-react';
 import Pagination from '../components/Pagination';
-import { getGradosByDisciplina, DISCIPLINAS } from '../utils/constants';
+import { getGradosByDisciplina, DISCIPLINAS, getDisciplinaColor } from '../utils/constants';
 
 export default function Cinturones() {
   const [alumnos, setAlumnos] = useState([]);
@@ -329,7 +329,7 @@ export default function Cinturones() {
                         <div className="flex flex-col">
                           <div className="font-semibold text-slate-900 dark:text-white transition-colors duration-300">{alumno.nombre} {alumno.apellidos}</div>
                           <div className="flex items-center gap-1.5 mt-1">
-                            <span className={`w-1.5 h-1.5 rounded-full ${(alumno.disciplina || 'Taekwondo') === 'Muay Thai' ? 'bg-red-500' : 'bg-blue-500'}`}></span>
+                            <span className={`w-1.5 h-1.5 rounded-full ${getDisciplinaColor(alumno.disciplina || 'Taekwondo')}`}></span>
                             <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
                               {alumno.disciplina || 'Taekwondo'}
                             </span>

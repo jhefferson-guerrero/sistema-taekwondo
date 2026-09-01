@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { supabase } from '../services/supabaseClient';
-import { DISCIPLINAS, getGradosByDisciplina } from '../utils/constants';
+import { DISCIPLINAS, getGradosByDisciplina, getDisciplinaColor } from '../utils/constants';
 import { Search, Filter, CalendarCheck, Clock, User, CheckCircle, XCircle, AlertCircle, Plus, ChevronLeft, ChevronRight, Loader2, Users, Calendar, Check, X, Activity } from 'lucide-react';
 import { calcularClasesRestantes } from '../utils/membresiaUtils';
 import Pagination from '../components/Pagination';
@@ -335,7 +335,7 @@ export default function Asistencia() {
                         <div className="flex flex-col">
                           <div className="font-semibold text-slate-900 dark:text-white transition-colors duration-300">{alumno.nombre} {alumno.apellidos}</div>
                           <div className="flex items-center gap-1.5 mt-1">
-                            <span className={`w-1.5 h-1.5 rounded-full ${(alumno.disciplina || 'Taekwondo') === 'Muay Thai' ? 'bg-red-500' : 'bg-blue-500'}`}></span>
+                            <span className={`w-1.5 h-1.5 rounded-full ${getDisciplinaColor(alumno.disciplina || 'Taekwondo')}`}></span>
                             <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
                               {alumno.disciplina || 'Taekwondo'}
                             </span>

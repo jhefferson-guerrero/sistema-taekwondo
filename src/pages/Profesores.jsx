@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { supabase } from '../services/supabaseClient';
 import { Search, Plus, Loader2, Edit2, Trash2, GraduationCap, X, Calendar, Users, Phone, User, MapPin, ChevronRight, ArrowLeft, AlertCircle, Activity } from 'lucide-react';
-import { DISCIPLINAS } from '../utils/constants';
+import { DISCIPLINAS, getDisciplinaColor } from '../utils/constants';
 
 export default function Profesores() {
   const [profesores, setProfesores] = useState([]);
@@ -265,7 +265,7 @@ export default function Profesores() {
                 </h3>
 
                 <div className="flex items-center gap-1.5 mb-4">
-                  <span className={`w-1.5 h-1.5 rounded-full ${prof.disciplina === 'Muay Thai' ? 'bg-red-500' : 'bg-blue-500'}`}></span>
+                  <span className={`w-1.5 h-1.5 rounded-full ${getDisciplinaColor(prof.disciplina)}`}></span>
                   <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
                     {prof.disciplina || 'Taekwondo'}
                   </span>
@@ -361,7 +361,7 @@ export default function Profesores() {
                       {selectedProfesor.nombre} {selectedProfesor.apellidos}
                     </h2>
                     <div className="flex items-center gap-1.5 mt-1">
-                      <span className={`w-1.5 h-1.5 rounded-full ${selectedProfesor.disciplina === 'Muay Thai' ? 'bg-red-500' : 'bg-blue-500'}`}></span>
+                      <span className={`w-1.5 h-1.5 rounded-full ${getDisciplinaColor(selectedProfesor.disciplina)}`}></span>
                       <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
                         {selectedProfesor.disciplina || 'Taekwondo'}
                       </span>
