@@ -1,25 +1,30 @@
 # 🥋 Sistema de Gestión para Academia de Taekwondo
 
-![Banner del Proyecto](ruta/a/tu/imagen_banner_o_logo.jpg)
+![React](https://img.shields.io/badge/REACT-19.2.8-0078D4?style=for-the-badge&logo=react&logoColor=61DAFB&labelColor=424242)
+![Vite](https://img.shields.io/badge/VITE-8.2.0-8A2BE2?style=for-the-badge&logo=vite&logoColor=646CFF&labelColor=424242)
+![Tailwind CSS](https://img.shields.io/badge/TAILWIND%20CSS-4.3.3-38B2AC?style=for-the-badge&logo=tailwindcss&logoColor=06B6D4&labelColor=424242)
+![Supabase](https://img.shields.io/badge/SUPABASE-2.112.3-1C3D5A?style=for-the-badge&logo=supabase&logoColor=3ECF8E&labelColor=424242)
+
+![Vista Previa del Proyecto](./public/screenshot-inicio.png)
 
 Una plataforma web integral y moderna diseñada específicamente para la administración eficiente de academias y dojangs de Taekwondo. Este sistema centraliza la gestión de alumnos, asistencias, pagos, rangos (cinturones) y horarios en una única interfaz intuitiva, permitiendo a los instructores y administradores enfocarse en lo que más importa: la enseñanza.
 
 ## ✨ Características Principales
 
-*   📊 **Dashboard Interactivo:** Panel principal con métricas clave y gráficos (impulsados por Recharts) para una visión general del estado de la academia.
-*   👥 **Gestión de Alumnos y Profesores:** Registro y administración completa de la información del personal y los estudiantes.
-*   📅 **Control de Asistencia:** Sistema ágil para registrar y monitorear la asistencia a las clases.
-*   🥋 **Progresión de Cinturones:** Seguimiento del historial de grados, exámenes y promociones de cada alumno.
-*   💰 **Gestión de Pagos:** Control de mensualidades, inscripciones, generación de recibos y reportes financieros (exportables a PDF gracias a jsPDF).
-*   🕒 **Horarios de Clases:** Organización y visualización de las diferentes clases y turnos.
-*   🔒 **Seguridad y Autenticación:** Acceso seguro al sistema gestionado por Supabase Auth y protegido contra bots mediante Cloudflare Turnstile.
-*   🌓 **Modo Oscuro/Claro:** Soporte nativo para temas personalizados mejorando la experiencia del usuario.
+* **Dashboard Interactivo:** Panel principal con métricas clave y gráficos (impulsados por Recharts) para una visión general del estado de la academia.
+* **Gestión de Alumnos y Profesores:** Registro y administración completa de la información del personal y los estudiantes.
+* **Control de Asistencia:** Sistema ágil para registrar y monitorear la asistencia a las clases.
+* **Progresión de Cinturones:** Seguimiento del historial de grados, exámenes y promociones de cada alumno.
+* **Gestión de Pagos:** Control de mensualidades, inscripciones, generación de recibos y reportes financieros (exportables a PDF gracias a jsPDF).
+* **Horarios de Clases:** Organización y visualización de las diferentes clases y turnos.
+* **Seguridad y Autenticación:** Acceso seguro al sistema gestionado por Supabase Auth y protegido contra bots mediante Cloudflare Turnstile.
+
 
 ## 📸 Capturas de Pantalla
 
-| Dashboard | Gestión de Alumnos | Control de Pagos |
+| Dashboard | Gestión de Horarios | Control de Pagos |
 | :---: | :---: | :---: |
-| ![Dashboard](ruta/a/tu/imagen_dashboard.jpg) | ![Alumnos](ruta/a/tu/imagen_alumnos.jpg) | ![Pagos](ruta/a/tu/imagen_pagos.jpg) |
+| ![Dashboard](./public/screenshot-dashboard.png) | ![Horarios](./public/screenshot-horarios.png) | ![Pagos](./public/screenshot-pagos.png) |
 
 ## 🚀 Tecnologías Utilizadas
 
@@ -50,7 +55,7 @@ Sigue estos pasos para ejecutar el proyecto en tu entorno local:
 
 1. **Clonar el repositorio:**
    ```bash
-   git clone <URL_DEL_REPOSITORIO>
+   git clone https://github.com/jhefferson-guerrero/sistema-taekwondo.git
    cd sistema-taekwondo
    ```
 
@@ -72,7 +77,7 @@ Sigue estos pasos para ejecutar el proyecto en tu entorno local:
    ```
 
 
-## 🏗️ Scripts Disponibles
+## 📜 Scripts Disponibles
 
 En el directorio del proyecto, puedes ejecutar:
 
