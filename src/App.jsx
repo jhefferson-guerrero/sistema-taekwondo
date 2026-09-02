@@ -10,6 +10,9 @@ import Cinturones from './pages/Cinturones';
 import Profesores from './pages/Profesores';
 
 import DashboardLayout from './components/DashboardLayout';
+import TabletLayout from './components/TabletLayout';
+import TabletHorarios from './pages/tablet/TabletHorarios';
+import TabletAsistencia from './pages/tablet/TabletAsistencia';
 
 function App() {
   return (
@@ -19,7 +22,7 @@ function App() {
       <Route 
         path="/dashboard/*" 
         element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedRoles={['admin']}>
             <DashboardLayout>
               <Routes>
                 <Route path="" element={<Dashboard />} />
@@ -34,6 +37,20 @@ function App() {
             </DashboardLayout>
           </ProtectedRoute>
         } 
+      />
+      <Route 
+        path="/tablet/*" 
+        element={
+          <ProtectedRoute allowedRoles={['tablet']}>
+            <TabletLayout>
+              <Routes>
+                <Route path="horarios" element={<TabletHorarios />} />
+                <Route path="asistencia/:horarioId" element={<TabletAsistencia />} />
+                <Route path="*" element={<Navigate to="horarios" replace />} />
+              </Routes>
+            </TabletLayout>
+          </ProtectedRoute>
+        }
       />
     </Routes>
   );

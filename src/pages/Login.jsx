@@ -37,7 +37,12 @@ export default function Login() {
       }
 
       if (data.session) {
-        navigate('/dashboard');
+        const userRole = data.session.user?.user_metadata?.role;
+        if (userRole === 'tablet') {
+          navigate('/tablet/horarios');
+        } else {
+          navigate('/dashboard');
+        }
       }
     } catch (err) {
       // Cero fuga de información: Mensaje genérico

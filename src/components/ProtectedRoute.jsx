@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { supabase } from '../services/supabaseClient';
 import { Loader2 } from 'lucide-react';
 
-export default function ProtectedRoute({ children }) {
+export default function ProtectedRoute({ children, allowedRoles }) {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
+  const location = useLocation();
 
   useEffect(() => {
     // Verificar la sesión actual
@@ -34,6 +35,17 @@ export default function ProtectedRoute({ children }) {
 
   if (!session) {
     return <Navigate to="/login" replace />;
+  }
+
+  const userRole = session.user?.user_metadata?.role || 'admin'; // Default to admin if no role is specified
+
+  if (allowedRoles && !allowedRoles.includes(userRole)) {
+    // Redirect based on the actual role of the user
+    if (userRole === 'tablet') {
+      return <Navigate to="/tablet/horarios" replace />;
+    } else {
+      return <Navigate to="/dashboard" replace />;
+    }
   }
 
   return children;
