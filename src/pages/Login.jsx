@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabaseClient';
-import { ArrowRight, Lock, Mail, Loader2, AlertCircle } from 'lucide-react';
+import { ArrowRight, Lock, Mail, Loader2, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { Turnstile } from '@marsidev/react-turnstile';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [captchaToken, setCaptchaToken] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -38,8 +39,8 @@ export default function Login() {
 
       if (data.session) {
         const userRole = data.session.user?.user_metadata?.role;
-        if (userRole === 'tablet') {
-          navigate('/tablet/horarios');
+        if (userRole === 'profesor') {
+          navigate('/profesor/horarios');
         } else {
           navigate('/dashboard');
         }
@@ -112,14 +113,25 @@ export default function Login() {
                       <Lock className="w-5 h-5 text-slate-400 dark:text-white/30 group-focus-within/input:text-red-500 transition-colors duration-500" strokeWidth={1.5} />
                     </div>
                     <input
-                      type="password"
+                      type={showPassword ? "text" : "password"}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       disabled={loading}
                       placeholder="Contraseña"
-                      className="w-full bg-slate-50 border border-slate-200 text-slate-900 placeholder:text-slate-400 dark:bg-white/5 dark:border-white/10 dark:text-white dark:placeholder:text-white/30 rounded-2xl py-4 pl-12 pr-4 focus:outline-none focus:border-red-500 focus:bg-white dark:focus:bg-white/10 focus:ring-1 focus:ring-red-500 transition-all duration-300 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full bg-slate-50 border border-slate-200 text-slate-900 placeholder:text-slate-400 dark:bg-white/5 dark:border-white/10 dark:text-white dark:placeholder:text-white/30 rounded-2xl py-4 pl-12 pr-12 focus:outline-none focus:border-red-500 focus:bg-white dark:focus:bg-white/10 focus:ring-1 focus:ring-red-500 transition-all duration-300 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed"
                       required
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600 dark:text-white/30 dark:hover:text-white/60 transition-colors focus:outline-none"
+                    >
+                      {showPassword ? (
+                        <EyeOff className="w-5 h-5" strokeWidth={1.5} />
+                      ) : (
+                        <Eye className="w-5 h-5" strokeWidth={1.5} />
+                      )}
+                    </button>
                   </div>
                 </div>
 

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createPortal } from 'react-dom';
 import { supabase } from '../services/supabaseClient';
 import { DISCIPLINAS, getGradosByDisciplina, getDisciplinaColor } from '../utils/constants';
@@ -13,9 +14,8 @@ const getLocalDateString = () => {
 };
 
 export default function Asistencia() {
-  const [alumnos, setAlumnos] = useState([]);
+  const queryClient = useQueryClient();
   const [asistenciasHoy, setAsistenciasHoy] = useState(new Set());
-  const [loading, setLoading] = useState(true);
   const [markingId, setMarkingId] = useState(null);
   const [undoAlumno, setUndoAlumno] = useState(null);
   const [undoing, setUndoing] = useState(false);
@@ -44,82 +44,81 @@ export default function Asistencia() {
   const itemsPerPage = 20;
 
   useEffect(() => {
-    fetchData();
-  }, [selectedDate]);
-
-  useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, beltFilter, selectedDate, disciplinaFilter]);
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
+  const fetchAsistenciaData = async () => {
+    const { data: alumnosDataRaw, error: alumnosError } = await supabase
+      .from('alumnos')
+      .select(`
+        *,
+        pagos ( fecha_inicio, fecha_vencimiento ),
+        horarios ( dias ),
+        asistencias ( id, fecha_asistencia )
+      `)
+      .order('nombre', { ascending: true });
 
-      const { data: alumnosDataRaw, error: alumnosError } = await supabase
-        .from('alumnos')
-        .select(`
-          *,
-          pagos ( fecha_inicio, fecha_vencimiento ),
-          horarios ( dias ),
-          asistencias ( id, fecha_asistencia )
-        `)
-        .order('nombre', { ascending: true });
+    if (alumnosError) throw alumnosError;
 
-      if (alumnosError) throw alumnosError;
+    const alumnosData = (alumnosDataRaw || []).filter(a => a.estado !== 'Inactivo');
 
-      const alumnosData = (alumnosDataRaw || []).filter(a => a.estado !== 'Inactivo');
+    const dateParts = selectedDate.split('-');
+    const targetDate = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
+    const targetStart = targetDate.getTime();
+    const targetEndObj = new Date(targetDate);
+    targetEndObj.setHours(23, 59, 59, 999);
+    const targetEnd = targetEndObj.getTime();
 
-      const dateParts = selectedDate.split('-');
-      const targetDate = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
-      const targetStart = targetDate.getTime();
-      const targetEndObj = new Date(targetDate);
-      targetEndObj.setHours(23, 59, 59, 999);
-      const targetEnd = targetEndObj.getTime();
+    const attendedTodaySet = new Set();
 
-      const attendedTodaySet = new Set();
+    const alumnosProcessed = alumnosData.map(a => {
+      let clasesRestantes = 0;
+      if (a.pagos && a.pagos.length > 0) {
+        const latestPago = [...a.pagos].sort((x, y) => new Date(y.fecha_vencimiento) - new Date(x.fecha_vencimiento))[0];
+        clasesRestantes = calcularClasesRestantes(
+          latestPago.fecha_inicio,
+          latestPago.fecha_vencimiento,
+          a.horarios?.dias || []
+        );
+      }
 
-      const alumnosProcessed = alumnosData.map(a => {
-        let clasesRestantes = 0;
-        if (a.pagos && a.pagos.length > 0) {
-          const latestPago = [...a.pagos].sort((x, y) => new Date(y.fecha_vencimiento) - new Date(x.fecha_vencimiento))[0];
-          clasesRestantes = calcularClasesRestantes(
-            latestPago.fecha_inicio,
-            latestPago.fecha_vencimiento,
-            a.horarios?.dias || []
-          );
+      let ultima_asistencia = null;
+      if (a.asistencias && a.asistencias.length > 0) {
+        const sorted = [...a.asistencias].sort((x, y) => new Date(y.fecha_asistencia) - new Date(x.fecha_asistencia));
+        ultima_asistencia = sorted[0].fecha_asistencia;
+
+        const hasAttendedToday = sorted.some(att => {
+          const time = new Date(att.fecha_asistencia).getTime();
+          return time >= targetStart && time <= targetEnd;
+        });
+
+        if (hasAttendedToday) {
+          attendedTodaySet.add(a.id);
         }
+      }
 
-        let ultima_asistencia = null;
-        if (a.asistencias && a.asistencias.length > 0) {
-          const sorted = [...a.asistencias].sort((x, y) => new Date(y.fecha_asistencia) - new Date(x.fecha_asistencia));
-          ultima_asistencia = sorted[0].fecha_asistencia;
+      return {
+        ...a,
+        clases_restantes: clasesRestantes,
+        ultima_asistencia
+      };
+    });
 
-          const hasAttendedToday = sorted.some(att => {
-            const time = new Date(att.fecha_asistencia).getTime();
-            return time >= targetStart && time <= targetEnd;
-          });
-
-          if (hasAttendedToday) {
-            attendedTodaySet.add(a.id);
-          }
-        }
-
-        return {
-          ...a,
-          clases_restantes: clasesRestantes,
-          ultima_asistencia
-        };
-      });
-
-      setAsistenciasHoy(attendedTodaySet);
-      setAlumnos(alumnosProcessed);
-
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    } finally {
-      setLoading(false);
-    }
+    return { alumnosProcessed, attendedTodaySet };
   };
+
+  const { data, isLoading: loading } = useQuery({
+    queryKey: ['asistenciaData', selectedDate],
+    queryFn: fetchAsistenciaData
+  });
+
+  const alumnos = data?.alumnosProcessed || [];
+  
+  useEffect(() => {
+    if (data?.attendedTodaySet) {
+      setAsistenciasHoy(data.attendedTodaySet);
+    }
+  }, [data?.attendedTodaySet]);
 
   const handleMarcarAsistencia = async (alumnoId) => {
     try {
@@ -136,12 +135,7 @@ export default function Asistencia() {
       if (error) throw error;
 
       setAsistenciasHoy(prev => new Set([...prev, alumnoId]));
-      setAlumnos(prevAlumnos => prevAlumnos.map(a =>
-        a.id === alumnoId ? {
-          ...a,
-          ultima_asistencia: insertDate.toISOString()
-        } : a
-      ));
+      queryClient.invalidateQueries({ queryKey: ['asistenciaData', selectedDate] });
 
     } catch (error) {
       console.error('Error marking attendance:', error);
@@ -178,8 +172,7 @@ export default function Asistencia() {
         next.delete(undoAlumno.id);
         return next;
       });
-      // La "ultima asistencia" real en el frontend ya no será la correcta hasta recargar la página,
-      // pero está bien visualmente dejarla tal cual o refrescarla. Para un MVP es aceptable.
+      queryClient.invalidateQueries({ queryKey: ['asistenciaData', selectedDate] });
       setUndoAlumno(null);
     } catch (error) {
       console.error('Error undoing attendance:', error);
@@ -247,7 +240,7 @@ export default function Asistencia() {
         </header>
 
         {/* Toolbar Section */}
-        <div className="flex flex-col sm:flex-row items-center gap-4 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
+        <div className="flex flex-col sm:flex-row items-center gap-4">
           <div className="relative w-full sm:w-96 group/search">
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
               <Search className="w-4 h-4 text-slate-400 group-focus-within/search:text-red-600 dark:text-white/40 dark:group-focus-within/search:text-red-500 transition-colors" />

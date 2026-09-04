@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createPortal } from 'react-dom';
 import { supabase } from '../services/supabaseClient';
 import { Search, Plus, Loader2, Edit2, Trash2, GraduationCap, X, Calendar, Users, Phone, User, MapPin, ChevronRight, ArrowLeft, AlertCircle, Activity } from 'lucide-react';
 import { DISCIPLINAS, getDisciplinaColor } from '../utils/constants';
 
 export default function Profesores() {
-  const [profesores, setProfesores] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -35,26 +35,20 @@ export default function Profesores() {
   const [detailsSearchTerm, setDetailsSearchTerm] = useState('');
   const [selectedHorarioView, setSelectedHorarioView] = useState(null);
 
-  useEffect(() => {
-    fetchProfesores();
-  }, []);
+  const fetchProfesoresData = async () => {
+    const { data, error } = await supabase
+      .from('profesores')
+      .select('*')
+      .order('nombre', { ascending: true });
 
-  const fetchProfesores = async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('profesores')
-        .select('*')
-        .order('nombre', { ascending: true });
-
-      if (error) throw error;
-      setProfesores(data || []);
-    } catch (error) {
-      console.error('Error fetching profesores:', error);
-    } finally {
-      setLoading(false);
-    }
+    if (error) throw error;
+    return data || [];
   };
+
+  const { data: profesores = [], isLoading: loading } = useQuery({
+    queryKey: ['profesoresData'],
+    queryFn: fetchProfesoresData
+  });
 
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -124,7 +118,7 @@ export default function Profesores() {
         if (error) throw error;
       }
       setIsModalOpen(false);
-      fetchProfesores();
+      queryClient.invalidateQueries({ queryKey: ['profesoresData'] });
     } catch (error) {
       console.error('Error saving profesor:', error);
       alert('Error guardando profesor');
@@ -144,7 +138,7 @@ export default function Profesores() {
       const { error } = await supabase.from('profesores').delete().eq('id', deleteId);
       if (error) throw error;
       setDeleteId(null);
-      await fetchProfesores();
+      queryClient.invalidateQueries({ queryKey: ['profesoresData'] });
     } catch (err) {
       console.error('Error deleting:', err);
       alert('Error eliminando profesor');

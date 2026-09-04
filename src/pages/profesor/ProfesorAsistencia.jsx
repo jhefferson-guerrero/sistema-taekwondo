@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../../services/supabaseClient';
-import { ChevronLeft, CheckCircle, Loader2, Users, Check, XCircle } from 'lucide-react';
+import { ChevronLeft, CheckCircle, Loader2, Users, Check } from 'lucide-react';
 import { getDisciplinaColor } from '../../utils/constants';
 
 const getLocalDateString = () => {
@@ -10,7 +10,7 @@ const getLocalDateString = () => {
   return d.toISOString().split('T')[0];
 };
 
-export default function TabletAsistencia() {
+export default function ProfesorAsistencia() {
   const { horarioId } = useParams();
   const navigate = useNavigate();
   
@@ -30,7 +30,6 @@ export default function TabletAsistencia() {
     try {
       setLoading(true);
 
-      // 1. Fetch Horario Info
       const { data: horarioData, error: horarioError } = await supabase
         .from('horarios')
         .select('*')
@@ -40,7 +39,6 @@ export default function TabletAsistencia() {
       if (horarioError) throw horarioError;
       setHorario(horarioData);
 
-      // 2. Fetch Alumnos para este horario
       const { data: alumnosDataRaw, error: alumnosError } = await supabase
         .from('alumnos')
         .select(`
@@ -88,7 +86,7 @@ export default function TabletAsistencia() {
   };
 
   const handleMarcarAsistencia = async (alumnoId) => {
-    if (asistenciasHoy.has(alumnoId)) return; // Prevents double click
+    if (asistenciasHoy.has(alumnoId)) return; 
     
     try {
       setMarkingId(alumnoId);
@@ -112,7 +110,6 @@ export default function TabletAsistencia() {
     }
   };
 
-  // We allow un-marking just in case they clicked by mistake
   const handleDesmarcarAsistencia = async (alumnoId) => {
     try {
       setMarkingId(alumnoId);
@@ -149,54 +146,52 @@ export default function TabletAsistencia() {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center h-full min-h-[60vh] gap-4">
-        <Loader2 className="w-16 h-16 text-red-600 animate-spin" />
-        <p className="text-xl font-medium text-slate-500 dark:text-white/60">Cargando alumnos...</p>
+      <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
+        <Loader2 className="w-12 h-12 text-red-600 animate-spin" />
+        <p className="text-lg font-medium text-slate-500 dark:text-white/60">Cargando alumnos...</p>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-8 pb-10">
+    <div className="flex flex-col gap-6 pb-6">
       
-      <header className="flex flex-col sm:flex-row items-center justify-between gap-6 bg-white dark:bg-slate-800 p-6 md:p-8 rounded-[2rem] border border-slate-200 dark:border-white/10 shadow-sm">
-        <div className="flex items-center gap-6 w-full sm:w-auto">
+      <header className="flex flex-col gap-4 bg-white dark:bg-slate-800 p-5 rounded-3xl border border-slate-200 dark:border-white/10 border-t-[4px] border-t-red-600 dark:border-t-red-600 shadow-sm">
+        <div className="flex items-center gap-4">
           <button
-            onClick={() => navigate('/tablet/horarios')}
-            className="w-16 h-16 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 flex items-center justify-center transition-colors shrink-0 active:scale-95"
+            onClick={() => navigate('/profesor/horarios')}
+            className="w-12 h-12 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 flex items-center justify-center transition-colors shrink-0 active:scale-95"
           >
-            <ChevronLeft className="w-8 h-8 text-slate-700 dark:text-white" />
+            <ChevronLeft className="w-6 h-6 text-slate-700 dark:text-white" />
           </button>
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
+          <div className="flex-1 overflow-hidden">
+            <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white truncate">
               {horario?.nombre || 'Clase'}
             </h1>
-            <p className="text-lg text-slate-500 dark:text-white/60 font-medium">
-              Lista de asistencia
+            <p className="text-sm text-slate-500 dark:text-white/60 font-medium">
+              Asistencia
             </p>
           </div>
         </div>
         
-        <div className="bg-slate-100 dark:bg-white/5 px-6 py-4 rounded-2xl flex items-center gap-4 w-full sm:w-auto justify-center">
-          <div className="text-center">
-            <div className="text-3xl font-bold text-slate-900 dark:text-white leading-none mb-1">
-              {asistenciasHoy.size} / {alumnos.length}
-            </div>
-            <div className="text-sm font-semibold uppercase tracking-widest text-slate-500 dark:text-white/50">
-              Presentes
-            </div>
+        <div className="bg-slate-100 dark:bg-white/5 px-4 py-3 rounded-2xl flex items-center justify-center gap-2">
+          <div className="text-xl font-bold text-slate-900 dark:text-white leading-none">
+            {asistenciasHoy.size} / {alumnos.length}
+          </div>
+          <div className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-white/50 mt-0.5">
+            Presentes
           </div>
         </div>
       </header>
 
       {alumnos.length === 0 ? (
-        <div className="flex flex-col items-center justify-center p-20 text-center bg-white dark:bg-slate-800 rounded-[3rem] border border-slate-200 dark:border-white/10">
-          <Users className="w-20 h-20 text-slate-300 dark:text-white/20 mb-6" />
-          <h3 className="text-2xl font-semibold text-slate-900 dark:text-white mb-2">Sin alumnos inscritos</h3>
-          <p className="text-lg text-slate-500 dark:text-white/60">No hay alumnos asignados a este horario.</p>
+        <div className="flex flex-col items-center justify-center p-10 text-center bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-white/10">
+          <Users className="w-16 h-16 text-slate-300 dark:text-white/20 mb-4" />
+          <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">Sin alumnos</h3>
+          <p className="text-sm text-slate-500 dark:text-white/60">No hay alumnos asignados a este horario.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-4">
           {alumnos.map((alumno) => {
             const hasAttended = asistenciasHoy.has(alumno.id);
             const isMarking = markingId === alumno.id;
@@ -204,22 +199,18 @@ export default function TabletAsistencia() {
             return (
               <div 
                 key={alumno.id} 
-                className={`flex items-center justify-between p-6 rounded-[2rem] border-2 transition-all duration-300 ${
-                  hasAttended 
-                    ? 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20' 
-                    : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-white/10'
-                }`}
+                className="flex items-center justify-between p-4 rounded-2xl border transition-all duration-300 bg-white dark:bg-[#141414] border-slate-200 dark:border-white/10 shadow-sm"
               >
-                <div className="flex flex-col gap-1 overflow-hidden pr-4">
-                  <span className="text-2xl font-bold text-slate-900 dark:text-white truncate">
+                <div className="flex flex-col gap-1 overflow-hidden pr-2">
+                  <span className="text-lg font-bold text-slate-900 dark:text-white truncate">
                     {alumno.nombre} {alumno.apellidos}
                   </span>
-                  <div className="flex flex-wrap items-center gap-2 mt-1">
-                    <span className="inline-flex items-center px-3 py-1 rounded-full bg-slate-100 dark:bg-white/10 text-sm font-bold text-slate-800 dark:text-white/90">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/10 text-xs font-bold text-slate-800 dark:text-white/90">
                       {alumno.cinturon}
                     </span>
                     <span className={`w-2 h-2 rounded-full ${getDisciplinaColor(alumno.disciplina || 'Taekwondo')}`}></span>
-                    <span className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
                       {alumno.disciplina || 'Taekwondo'}
                     </span>
                   </div>
@@ -228,20 +219,20 @@ export default function TabletAsistencia() {
                 <button
                   onClick={() => hasAttended ? handleDesmarcarAsistencia(alumno.id) : handleMarcarAsistencia(alumno.id)}
                   disabled={isMarking}
-                  className={`relative w-20 h-20 rounded-full flex items-center justify-center shrink-0 transition-all duration-300 active:scale-95 ${
+                  className={`relative w-14 h-14 rounded-full flex items-center justify-center shrink-0 transition-all duration-300 active:scale-95 ${
                     isMarking 
                       ? 'bg-slate-200 dark:bg-white/10'
                       : hasAttended
-                        ? 'bg-emerald-500 text-white hover:bg-emerald-600 shadow-lg shadow-emerald-500/30'
-                        : 'bg-slate-100 hover:bg-red-50 dark:bg-white/5 dark:hover:bg-red-500/20 text-slate-400 hover:text-red-600 dark:text-white/30 dark:hover:text-red-500 border-2 border-transparent hover:border-red-200 dark:hover:border-red-500/30'
+                        ? 'bg-emerald-500 text-white hover:bg-emerald-600'
+                        : 'bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-400 hover:text-slate-600 dark:text-white/30 dark:hover:text-white border-2 border-transparent hover:border-slate-300 dark:hover:border-white/20'
                   }`}
                 >
                   {isMarking ? (
-                    <Loader2 className="w-8 h-8 animate-spin" strokeWidth={3} />
+                    <Loader2 className="w-6 h-6 animate-spin" strokeWidth={3} />
                   ) : hasAttended ? (
-                    <Check className="w-10 h-10" strokeWidth={3} />
+                    <Check className="w-8 h-8" strokeWidth={3} />
                   ) : (
-                    <CheckCircle className="w-10 h-10" strokeWidth={2} />
+                    <CheckCircle className="w-8 h-8" strokeWidth={2} />
                   )}
                 </button>
               </div>

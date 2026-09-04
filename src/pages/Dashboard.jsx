@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabaseClient';
 import { Loader2, TrendingUp, Users, AlertTriangle, Calendar } from 'lucide-react';
@@ -6,147 +7,156 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
+  const fetchDashboardData = async () => {
+    const [alumnosRes, pagosRes, ingresosExtraRes] = await Promise.all([
+      supabase.from('alumnos').select('id, nombre, apellidos, estado'),
+      supabase.from('pagos').select('id, alumno_id, monto, fecha_inicio, fecha_vencimiento'),
+      supabase.from('ingresos_extra').select('id, monto, fecha')
+    ]);
 
-  // KPIs
-  const [ingresosMes, setIngresosMes] = useState(0);
-  const [totalAlumnos, setTotalAlumnos] = useState(0);
-  const [vencidasCount, setVencidasCount] = useState(0);
+    if (alumnosRes.error) throw alumnosRes.error;
+    if (pagosRes.error) throw pagosRes.error;
+    
+    const ingresosExtraData = ingresosExtraRes.data || [];
+    const alumnosData = alumnosRes.data || [];
+    const pagosData = pagosRes.data || [];
 
-  // Alertas
-  const [alertas, setAlertas] = useState([]);
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-  // Gráfico
-  const [chartData, setChartData] = useState([]);
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-
-      const [alumnosRes, pagosRes] = await Promise.all([
-        supabase.from('alumnos').select('id, nombre, apellidos, estado'),
-        supabase.from('pagos').select('id, alumno_id, monto, fecha_inicio, fecha_vencimiento')
-      ]);
-
-      if (alumnosRes.error) throw alumnosRes.error;
-      if (pagosRes.error) throw pagosRes.error;
-
-      const alumnosData = alumnosRes.data || [];
-      const pagosData = pagosRes.data || [];
-
-      const now = new Date();
-      const currentMonth = now.getMonth();
-      const currentYear = now.getFullYear();
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-      // 1. Ingresos del Mes (basado en fecha_inicio)
-      let sumaIngresos = 0;
-      pagosData.forEach(p => {
-        if (!p.fecha_inicio) return;
-        const pDate = new Date(`${p.fecha_inicio}T00:00:00`);
-        if (pDate.getMonth() === currentMonth && pDate.getFullYear() === currentYear) {
-          sumaIngresos += Number(p.monto || 0);
-        }
-      });
-      setIngresosMes(sumaIngresos);
-
-      // 2. Alumnos Registrados (solo Activos)
-      const alumnosActivos = alumnosData.filter(a => a.estado !== 'Inactivo');
-      setTotalAlumnos(alumnosActivos.length);
-
-      // Agrupar el último pago de cada alumno activo
-      const alumnosConUltimoPago = alumnosActivos.map(a => {
-        const misPagos = pagosData.filter(p => p.alumno_id === a.id);
-        let latestPago = null;
-        if (misPagos.length > 0) {
-          latestPago = [...misPagos].sort((x, y) => new Date(y.fecha_vencimiento) - new Date(x.fecha_vencimiento))[0];
-        }
-        return { ...a, latestPago };
-      });
-
-      // 3. Mensualidades Vencidas (históricas)
-      let vencidas = 0;
-      alumnosConUltimoPago.forEach(a => {
-        if (a.latestPago && a.latestPago.fecha_vencimiento) {
-          const vDate = new Date(`${a.latestPago.fecha_vencimiento}T00:00:00`);
-          if (vDate < today) {
-            vencidas++;
-          }
-        }
-      });
-      setVencidasCount(vencidas);
-
-      // 4. Alertas (Últimos 15 días vencidos, próximos 5 días por vencer)
-      const limitPast = new Date(today);
-      limitPast.setDate(today.getDate() - 15);
-
-      const limitFuture = new Date(today);
-      limitFuture.setDate(today.getDate() + 5);
-
-      const listaAlertas = [];
-      alumnosConUltimoPago.forEach(a => {
-        if (a.latestPago && a.latestPago.fecha_vencimiento) {
-          const vDate = new Date(`${a.latestPago.fecha_vencimiento}T00:00:00`);
-
-          if (vDate >= limitPast && vDate <= limitFuture) {
-            let status = '';
-            if (vDate < today) {
-              status = 'Vencido';
-            } else {
-              status = 'Vence pronto';
-            }
-            listaAlertas.push({
-              id: a.id,
-              nombreCompleto: `${a.nombre} ${a.apellidos}`,
-              fechaVencimiento: a.latestPago.fecha_vencimiento,
-              vDate,
-              status
-            });
-          }
-        }
-      });
-
-      // Ordenar cronológicamente (las más antiguas primero)
-      listaAlertas.sort((a, b) => a.vDate - b.vDate);
-      setAlertas(listaAlertas);
-
-      // 5. Chart Data (Últimos 6 meses)
-      const last6Months = [];
-      for (let i = 5; i >= 0; i--) {
-        const d = new Date(currentYear, currentMonth - i, 1);
-        const monthName = d.toLocaleString('es-ES', { month: 'short' }); 
-        last6Months.push({
-          name: monthName.charAt(0).toUpperCase() + monthName.slice(1),
-          monthNum: d.getMonth(),
-          yearNum: d.getFullYear(),
-          ingresos: 0
-        });
+    // 1. Ingresos del Mes
+    let sumaIngresos = 0;
+    pagosData.forEach(p => {
+      if (!p.fecha_inicio) return;
+      const pDate = new Date(`${p.fecha_inicio}T00:00:00`);
+      if (pDate.getMonth() === currentMonth && pDate.getFullYear() === currentYear) {
+        sumaIngresos += Number(p.monto || 0);
       }
+    });
+    ingresosExtraData.forEach(ie => {
+      if (!ie.fecha) return;
+      const ieDate = new Date(`${ie.fecha}T00:00:00`);
+      if (ieDate.getMonth() === currentMonth && ieDate.getFullYear() === currentYear) {
+        sumaIngresos += Number(ie.monto || 0);
+      }
+    });
 
-      pagosData.forEach(p => {
-        if (!p.fecha_inicio) return;
-        const pDate = new Date(`${p.fecha_inicio}T00:00:00`);
-        const pMonth = pDate.getMonth();
-        const pYear = pDate.getFullYear();
-        
-        const targetMonth = last6Months.find(m => m.monthNum === pMonth && m.yearNum === pYear);
-        if (targetMonth) {
-          targetMonth.ingresos += Number(p.monto || 0);
+    // 2. Alumnos Registrados
+    const alumnosActivos = alumnosData.filter(a => a.estado !== 'Inactivo');
+    const totalAlumnos = alumnosActivos.length;
+
+    const alumnosConUltimoPago = alumnosActivos.map(a => {
+      const misPagos = pagosData.filter(p => p.alumno_id === a.id);
+      let latestPago = null;
+      if (misPagos.length > 0) {
+        latestPago = [...misPagos].sort((x, y) => new Date(y.fecha_vencimiento) - new Date(x.fecha_vencimiento))[0];
+      }
+      return { ...a, latestPago };
+    });
+
+    // 3. Mensualidades Vencidas
+    let vencidas = 0;
+    alumnosConUltimoPago.forEach(a => {
+      if (a.latestPago && a.latestPago.fecha_vencimiento) {
+        const vDate = new Date(`${a.latestPago.fecha_vencimiento}T00:00:00`);
+        if (vDate < today) {
+          vencidas++;
         }
-      });
-      
-      setChartData(last6Months);
+      }
+    });
 
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-    } finally {
-      setLoading(false);
+    // 4. Alertas
+    const limitPast = new Date(today);
+    limitPast.setDate(today.getDate() - 15);
+
+    const limitFuture = new Date(today);
+    limitFuture.setDate(today.getDate() + 5);
+
+    const listaAlertas = [];
+    alumnosConUltimoPago.forEach(a => {
+      if (a.latestPago && a.latestPago.fecha_vencimiento) {
+        const vDate = new Date(`${a.latestPago.fecha_vencimiento}T00:00:00`);
+
+        if (vDate >= limitPast && vDate <= limitFuture) {
+          let status = '';
+          if (vDate < today) {
+            status = 'Vencido';
+          } else {
+            status = 'Vence pronto';
+          }
+          listaAlertas.push({
+            id: a.id,
+            nombreCompleto: `${a.nombre} ${a.apellidos}`,
+            fechaVencimiento: a.latestPago.fecha_vencimiento,
+            vDate,
+            status
+          });
+        }
+      }
+    });
+
+    listaAlertas.sort((a, b) => a.vDate - b.vDate);
+
+    // 5. Chart Data
+    const last6Months = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(currentYear, currentMonth - i, 1);
+      const monthName = d.toLocaleString('es-ES', { month: 'short' }); 
+      last6Months.push({
+        name: monthName.charAt(0).toUpperCase() + monthName.slice(1),
+        monthNum: d.getMonth(),
+        yearNum: d.getFullYear(),
+        ingresos: 0
+      });
     }
+
+    pagosData.forEach(p => {
+      if (!p.fecha_inicio) return;
+      const pDate = new Date(`${p.fecha_inicio}T00:00:00`);
+      const pMonth = pDate.getMonth();
+      const pYear = pDate.getFullYear();
+      
+      const targetMonth = last6Months.find(m => m.monthNum === pMonth && m.yearNum === pYear);
+      if (targetMonth) {
+        targetMonth.ingresos += Number(p.monto || 0);
+      }
+    });
+
+    ingresosExtraData.forEach(ie => {
+      if (!ie.fecha) return;
+      const ieDate = new Date(`${ie.fecha}T00:00:00`);
+      const ieMonth = ieDate.getMonth();
+      const ieYear = ieDate.getFullYear();
+      
+      const targetMonth = last6Months.find(m => m.monthNum === ieMonth && m.yearNum === ieYear);
+      if (targetMonth) {
+        targetMonth.ingresos += Number(ie.monto || 0);
+      }
+    });
+
+    return {
+      ingresosMes: sumaIngresos,
+      totalAlumnos,
+      vencidasCount: vencidas,
+      alertas: listaAlertas,
+      chartData: last6Months
+    };
   };
+
+  const { data, isLoading: loading } = useQuery({
+    queryKey: ['dashboardData'],
+    queryFn: fetchDashboardData
+  });
+
+  const {
+    ingresosMes = 0,
+    totalAlumnos = 0,
+    vencidasCount = 0,
+    alertas = [],
+    chartData = []
+  } = data || {};
 
   return (
     <>

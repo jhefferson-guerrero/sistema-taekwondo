@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createPortal } from 'react-dom';
 import { supabase } from '../services/supabaseClient';
 import { Calendar as CalendarIcon, Clock, Users, Plus, X, Loader2, Search, Filter, Edit2, Trash2, AlertCircle } from 'lucide-react';
@@ -14,9 +15,7 @@ const DIAS_SEMANA = [
 ];
 
 export default function Horarios() {
-  const [horarios, setHorarios] = useState([]);
-  const [profesores, setProfesores] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editId, setEditId] = useState(null);
@@ -37,37 +36,29 @@ export default function Horarios() {
   });
   const [formErrors, setFormErrors] = useState({});
 
-  useEffect(() => {
-    fetchHorarios();
-    fetchProfesores();
-  }, []);
+  const fetchHorariosData = async () => {
+    const { data: horariosData, error: horariosError } = await supabase
+      .from('horarios')
+      .select('*, profesores(nombre, apellidos)')
+      .order('fecha_creacion', { ascending: false });
+    if (horariosError) throw horariosError;
 
-  const fetchProfesores = async () => {
-    try {
-      const { data, error } = await supabase.from('profesores').select('id, nombre, apellidos, disciplina').eq('estado', 'Activo');
-      if (error) throw error;
-      setProfesores(data || []);
-    } catch (error) {
-      console.error('Error fetching profesores:', error);
-    }
+    const { data: profData, error: profError } = await supabase
+      .from('profesores')
+      .select('id, nombre, apellidos, disciplina')
+      .eq('estado', 'Activo');
+    if (profError) throw profError;
+
+    return { horarios: horariosData || [], profesores: profData || [] };
   };
 
-  const fetchHorarios = async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('horarios')
-        .select('*, profesores(nombre, apellidos)')
-        .order('fecha_creacion', { ascending: false });
+  const { data, isLoading: loading } = useQuery({
+    queryKey: ['horariosData'],
+    queryFn: fetchHorariosData
+  });
 
-      if (error) throw error;
-      setHorarios(data || []);
-    } catch (error) {
-      console.error('Error fetching horarios:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const horarios = data?.horarios || [];
+  const profesores = data?.profesores || [];
 
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -184,7 +175,7 @@ export default function Horarios() {
       setIsModalOpen(false);
       setFormData({ nombre: '', dias: [], hora_inicio: '', hora_fin: '', profesor_id: '' });
       setEditId(null);
-      await fetchHorarios();
+      queryClient.invalidateQueries({ queryKey: ['horariosData'] });
     } catch (error) {
       console.error('Error saving horario:', error);
       alert('Error al guardar el horario. Inténtalo de nuevo.');
@@ -223,7 +214,7 @@ export default function Horarios() {
 
       if (error) throw error;
       setDeleteId(null);
-      await fetchHorarios();
+      queryClient.invalidateQueries({ queryKey: ['horariosData'] });
     } catch (error) {
       console.error('Error deleting horario:', error);
       alert('Error al eliminar el horario.');

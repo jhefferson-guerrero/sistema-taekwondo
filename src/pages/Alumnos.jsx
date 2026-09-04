@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createPortal } from 'react-dom';
 import { supabase } from '../services/supabaseClient';
 import { DISCIPLINAS, getGradosByDisciplina, getDisciplinaColor } from '../utils/constants';
@@ -23,8 +24,7 @@ const calcularEdad = (fechaNacimiento) => {
 };
 
 export default function Alumnos() {
-  const [alumnos, setAlumnos] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editId, setEditId] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
@@ -94,15 +94,6 @@ export default function Alumnos() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
 
-  useEffect(() => {
-    fetchAlumnos();
-    fetchHorarios();
-  }, []);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, beltFilter, statusFilter]);
-
   const fetchHorarios = async () => {
     try {
       const { data, error } = await supabase
@@ -116,45 +107,49 @@ export default function Alumnos() {
     }
   };
 
-  const fetchAlumnos = async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('alumnos')
-        .select('*, horarios(nombre, dias), pagos(fecha_vencimiento)')
-        .order('fecha_registro', { ascending: false });
+  useEffect(() => {
+    fetchHorarios();
+  }, []);
 
-      if (error) throw error;
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, beltFilter, statusFilter]);
 
-      const now = new Date();
-      const todayTime = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const fetchAlumnosQuery = async () => {
+    const { data, error } = await supabase
+      .from('alumnos')
+      .select('*, horarios(nombre, dias), pagos(fecha_vencimiento)')
+      .order('fecha_registro', { ascending: false });
 
-      const processedAlumnos = (data || []).map(a => {
-        let paymentStatus = 'none';
-        if (a.pagos && a.pagos.length > 0) {
-          const latestPago = [...a.pagos].sort((x, y) => new Date(y.fecha_vencimiento) - new Date(x.fecha_vencimiento))[0];
-          const vDate = new Date(`${latestPago.fecha_vencimiento}T00:00:00`);
-          const vTime = vDate.getTime();
-          const diffDays = Math.ceil((vTime - todayTime) / (1000 * 60 * 60 * 24));
+    if (error) throw error;
 
-          if (diffDays < 0) {
-            paymentStatus = 'expired';
-          } else if (diffDays <= 5) {
-            paymentStatus = 'warning';
-          } else {
-            paymentStatus = 'ok';
-          }
+    const now = new Date();
+    const todayTime = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+
+    return (data || []).map(a => {
+      let paymentStatus = 'none';
+      if (a.pagos && a.pagos.length > 0) {
+        const latestPago = [...a.pagos].sort((x, y) => new Date(y.fecha_vencimiento) - new Date(x.fecha_vencimiento))[0];
+        const vDate = new Date(`${latestPago.fecha_vencimiento}T00:00:00`);
+        const vTime = vDate.getTime();
+        const diffDays = Math.ceil((vTime - todayTime) / (1000 * 60 * 60 * 24));
+
+        if (diffDays < 0) {
+          paymentStatus = 'expired';
+        } else if (diffDays <= 5) {
+          paymentStatus = 'warning';
+        } else {
+          paymentStatus = 'ok';
         }
-        return { ...a, paymentStatus };
-      });
-
-      setAlumnos(processedAlumnos);
-    } catch (error) {
-      console.error('Error fetching alumnos:', error);
-    } finally {
-      setLoading(false);
-    }
+      }
+      return { ...a, paymentStatus };
+    });
   };
+
+  const { data: alumnos = [], isLoading: loading } = useQuery({
+    queryKey: ['alumnos'],
+    queryFn: fetchAlumnosQuery
+  });
 
   const handleDownloadPDF = async (alumno) => {
     setGeneratingPdfId(alumno.id);
@@ -214,7 +209,7 @@ export default function Alumnos() {
       setIsModalOpen(false);
       setFormData({ nombre: '', apellidos: '', telefono_padres: '', fecha_nacimiento: '', disciplina: 'Taekwondo', cinturon: 'Blanco', horario_id: '' });
       setEditId(null);
-      await fetchAlumnos();
+      queryClient.invalidateQueries({ queryKey: ['alumnos'] });
     } catch (error) {
       console.error('Error saving alumno:', error);
       alert('Error al guardar el alumno. Inténtalo de nuevo.');
@@ -288,7 +283,7 @@ export default function Alumnos() {
       setIsFreezeModalOpen(false);
       setFreezeData({ fechaInicio: '', fechaFin: '' });
       await openProfileModal(selectedProfile); // Refresca el expediente actual
-      await fetchAlumnos(); // Refresca la tabla principal de fondo
+      queryClient.invalidateQueries({ queryKey: ['alumnos'] }); // Refresca la tabla principal de fondo
 
     } catch (error) {
       console.error('Error congelando membresía:', error);
@@ -369,7 +364,7 @@ export default function Alumnos() {
       setIsUnfreezeModalOpen(false);
       setUnfreezeData({ fechaInicio: '', fechaFin: '' });
       await openProfileModal(selectedProfile);
-      await fetchAlumnos();
+      queryClient.invalidateQueries({ queryKey: ['alumnos'] });
 
     } catch (error) {
       console.error('Error descongelando membresía:', error);
@@ -412,7 +407,7 @@ export default function Alumnos() {
 
       if (error) throw error;
       setDeleteId(null);
-      await fetchAlumnos();
+      queryClient.invalidateQueries({ queryKey: ['alumnos'] });
     } catch (error) {
       console.error('Error desactivando alumno:', error);
       alert('Error al desactivar el alumno.');
@@ -452,7 +447,7 @@ export default function Alumnos() {
       if (error) throw error;
 
       setHardDeleteId(null);
-      await fetchAlumnos();
+      queryClient.invalidateQueries({ queryKey: ['alumnos'] });
     } catch (error) {
       console.error('Error eliminando alumno:', error);
       alert('Error al eliminar permanentemente el alumno.');
@@ -470,7 +465,7 @@ export default function Alumnos() {
         .eq('id', id);
 
       if (error) throw error;
-      await fetchAlumnos();
+      queryClient.invalidateQueries({ queryKey: ['alumnos'] });
     } catch (error) {
       console.error('Error restaurando alumno:', error);
       alert('Error al restaurar el alumno.');
@@ -590,7 +585,7 @@ export default function Alumnos() {
         </header>
 
         {/* Toolbar Section */}
-        <div className="flex flex-col sm:flex-row items-center gap-4 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
+        <div className="flex flex-col sm:flex-row items-center gap-4">
 
           <div className="flex bg-slate-200 dark:bg-slate-800 p-1 rounded-xl w-full sm:w-auto shrink-0">
             <button

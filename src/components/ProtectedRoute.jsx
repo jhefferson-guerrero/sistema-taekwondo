@@ -40,11 +40,28 @@ export default function ProtectedRoute({ children, allowedRoles }) {
   const userRole = session.user?.user_metadata?.role || 'admin'; // Default to admin if no role is specified
 
   if (allowedRoles && !allowedRoles.includes(userRole)) {
-    // Redirect based on the actual role of the user
-    if (userRole === 'tablet') {
-      return <Navigate to="/tablet/horarios" replace />;
-    } else {
+    // Redirigir según el rol real del usuario
+    if (userRole === 'profesor') {
+      return <Navigate to="/profesor/horarios" replace />;
+    } else if (userRole === 'admin') {
       return <Navigate to="/dashboard" replace />;
+    } else {
+      // Si el rol no es válido (ej. "tablet" u otro) y no tiene permiso, lo enviamos al login o le mostramos un error
+      // para evitar un bucle infinito de redirección.
+      return (
+        <div className="min-h-[100dvh] w-full bg-slate-900 flex flex-col items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-8 max-w-sm w-full text-center shadow-xl">
+            <h2 className="text-xl font-bold text-slate-900 mb-2">Acceso Restringido</h2>
+            <p className="text-slate-500 mb-6">Tu tipo de cuenta ({userRole}) no tiene una vista asignada en el sistema actualmente.</p>
+            <button 
+              onClick={() => supabase.auth.signOut()} 
+              className="bg-red-600 text-white font-bold py-2 px-6 rounded-full w-full"
+            >
+              Cerrar Sesión
+            </button>
+          </div>
+        </div>
+      );
     }
   }
 

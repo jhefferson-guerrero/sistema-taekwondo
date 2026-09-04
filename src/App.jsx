@@ -8,11 +8,12 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Horarios from './pages/Horarios';
 import Cinturones from './pages/Cinturones';
 import Profesores from './pages/Profesores';
+import IngresosExtra from './pages/IngresosExtra';
 
 import DashboardLayout from './components/DashboardLayout';
-import TabletLayout from './components/TabletLayout';
-import TabletHorarios from './pages/tablet/TabletHorarios';
-import TabletAsistencia from './pages/tablet/TabletAsistencia';
+import ProfesorLayout from './components/ProfesorLayout';
+import ProfesorHorarios from './pages/profesor/ProfesorHorarios';
+import ProfesorAsistencia from './pages/profesor/ProfesorAsistencia';
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
                 <Route path="" element={<Dashboard />} />
                 <Route path="alumnos" element={<Alumnos />} />
                 <Route path="pagos" element={<Pagos />} />
+                <Route path="ingresos-extra" element={<IngresosExtra />} />
                 <Route path="asistencia" element={<Asistencia />} />
                 <Route path="horarios" element={<Horarios />} />
                 <Route path="cinturones" element={<Cinturones />} />
@@ -39,16 +41,16 @@ function App() {
         } 
       />
       <Route 
-        path="/tablet/*" 
+        path="/profesor/*" 
         element={
-          <ProtectedRoute allowedRoles={['tablet']}>
-            <TabletLayout>
+          <ProtectedRoute allowedRoles={['profesor']}>
+            <ProfesorLayout>
               <Routes>
-                <Route path="horarios" element={<TabletHorarios />} />
-                <Route path="asistencia/:horarioId" element={<TabletAsistencia />} />
+                <Route path="horarios" element={<ProfesorHorarios />} />
+                <Route path="asistencia/:horarioId" element={<ProfesorAsistencia />} />
                 <Route path="*" element={<Navigate to="horarios" replace />} />
               </Routes>
-            </TabletLayout>
+            </ProfesorLayout>
           </ProtectedRoute>
         }
       />

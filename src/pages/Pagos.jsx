@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createPortal } from 'react-dom';
 import { supabase } from '../services/supabaseClient';
 import { DISCIPLINAS, getDisciplinaColor } from '../utils/constants';
@@ -19,9 +20,7 @@ const getNextMonthStr = (dateStr) => {
 };
 
 export default function Pagos() {
-  const [pagos, setPagos] = useState([]);
-  const [alumnos, setAlumnos] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editId, setEditId] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
@@ -47,47 +46,42 @@ export default function Pagos() {
   const itemsPerPage = 20;
 
   useEffect(() => {
-    fetchData();
-  }, []);
-
-  useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, metodoFilter, disciplinaFilter]);
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const { data: pagosData, error: pagosError } = await supabase
-        .from('pagos')
-        .select(`
-          *,
-          alumnos (
-            nombre,
-            apellidos,
-            disciplina
-          )
-        `)
-        .order('fecha_pago', { ascending: false });
+  const fetchPagosData = async () => {
+    const { data: pagosData, error: pagosError } = await supabase
+      .from('pagos')
+      .select(`
+        *,
+        alumnos (
+          nombre,
+          apellidos,
+          disciplina
+        )
+      `)
+      .order('fecha_pago', { ascending: false });
 
-      if (pagosError) throw pagosError;
-      setPagos(pagosData || []);
+    if (pagosError) throw pagosError;
 
-      const { data: alumnosData, error: alumnosError } = await supabase
-        .from('alumnos')
-        .select('id, nombre, apellidos, estado, disciplina')
-        .order('nombre', { ascending: true });
+    const { data: alumnosData, error: alumnosError } = await supabase
+      .from('alumnos')
+      .select('id, nombre, apellidos, estado, disciplina')
+      .order('nombre', { ascending: true });
 
-      if (alumnosError) throw alumnosError;
-      
-      const alumnosActivos = (alumnosData || []).filter(a => a.estado !== 'Inactivo');
-      setAlumnos(alumnosActivos);
-
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    } finally {
-      setLoading(false);
-    }
+    if (alumnosError) throw alumnosError;
+    
+    const alumnosActivos = (alumnosData || []).filter(a => a.estado !== 'Inactivo');
+    return { pagos: pagosData || [], alumnos: alumnosActivos };
   };
+
+  const { data, isLoading: loading } = useQuery({
+    queryKey: ['pagosData'],
+    queryFn: fetchPagosData
+  });
+
+  const pagos = data?.pagos || [];
+  const alumnos = data?.alumnos || [];
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -143,7 +137,7 @@ export default function Pagos() {
         metodo_pago: 'Efectivo'
       });
       setEditId(null);
-      await fetchData();
+      queryClient.invalidateQueries({ queryKey: ['pagosData'] });
     } catch (error) {
       console.error('Error saving pago:', error);
       alert('Error al guardar el pago. Inténtalo de nuevo.');
@@ -190,7 +184,7 @@ export default function Pagos() {
 
       if (error) throw error;
       setDeleteId(null);
-      await fetchData();
+      queryClient.invalidateQueries({ queryKey: ['pagosData'] });
     } catch (error) {
       console.error('Error deleting pago:', error);
       alert('Error al eliminar el pago.');
@@ -249,7 +243,7 @@ export default function Pagos() {
         </header>
 
         {/* Toolbar Section */}
-        <div className="flex flex-col sm:flex-row items-center gap-4 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
+        <div className="flex flex-col sm:flex-row items-center gap-4">
           <div className="relative w-full sm:w-96 group/search">
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
               <Search className="w-4 h-4 text-slate-400 group-focus-within/search:text-red-600 dark:text-white/40 dark:group-focus-within/search:text-red-500 transition-colors" />
@@ -517,7 +511,7 @@ export default function Pagos() {
                         onChange={handleInputChange}
                         disabled={saving}
                         required
-                        className="w-full bg-slate-50 border border-slate-200 text-slate-900 dark:bg-slate-800 dark:border-white/10 dark:text-white rounded-xl px-4 py-3 focus:outline-none focus:border-red-600 dark:focus:bg-white/10 transition-all duration-300 ease-in-out disabled:opacity-50"
+                        className="w-full bg-slate-50 border border-slate-200 text-slate-900 dark:bg-slate-800 dark:border-white/10 dark:text-white rounded-xl px-4 py-3 focus:outline-none focus:border-red-600 dark:focus:bg-white/10 transition-all duration-300 ease-in-out disabled:opacity-50 dark:[color-scheme:dark]"
                       />
                     </div>
                   </div>
@@ -532,7 +526,7 @@ export default function Pagos() {
                         onChange={handleInputChange}
                         disabled={saving}
                         required
-                        className="w-full bg-slate-50 border border-slate-200 text-slate-900 dark:bg-slate-800 dark:border-white/10 dark:text-white rounded-xl px-4 py-3 focus:outline-none focus:border-red-600 dark:focus:bg-white/10 transition-all duration-300 ease-in-out disabled:opacity-50"
+                        className="w-full bg-slate-50 border border-slate-200 text-slate-900 dark:bg-slate-800 dark:border-white/10 dark:text-white rounded-xl px-4 py-3 focus:outline-none focus:border-red-600 dark:focus:bg-white/10 transition-all duration-300 ease-in-out disabled:opacity-50 dark:[color-scheme:dark]"
                       />
                     </div>
                   </div>
@@ -540,17 +534,22 @@ export default function Pagos() {
 
                 <div className="flex flex-col gap-2">
                   <label className="text-xs uppercase tracking-widest text-slate-700 dark:text-white/80 font-medium ml-1 transition-colors duration-500">Método de Pago</label>
-                  <select
-                    name="metodo_pago"
-                    value={formData.metodo_pago}
-                    onChange={handleInputChange}
-                    disabled={saving}
-                    className="w-full bg-slate-50 border border-slate-200 text-slate-900 dark:bg-slate-800 dark:border-white/10 dark:text-white rounded-xl px-4 py-3 focus:outline-none focus:border-red-600 transition-all duration-300 ease-in-out disabled:opacity-50 appearance-none"
-                  >
-                    {metodosPago.map(m => (
-                      <option key={m} value={m}>{m}</option>
+                  <div className="grid grid-cols-2 gap-3">
+                    {metodosPago.map((metodo) => (
+                      <button
+                        key={metodo}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, metodo_pago: metodo })}
+                        disabled={saving}
+                        className={`py-3 px-4 rounded-xl text-sm font-bold transition-all border disabled:opacity-50 ${formData.metodo_pago === metodo
+                            ? 'bg-slate-900 text-white border-slate-900 shadow-md dark:bg-white dark:text-black dark:border-white'
+                            : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 dark:bg-transparent dark:border-white/10 dark:text-white/60 dark:hover:bg-white/5'
+                          }`}
+                      >
+                        {metodo}
+                      </button>
                     ))}
-                  </select>
+                  </div>
                 </div>
 
                 <button

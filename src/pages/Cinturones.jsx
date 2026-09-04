@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createPortal } from 'react-dom';
 import { supabase } from '../services/supabaseClient';
 import { Search, Filter, Award, Loader2, X, Users, History, ArrowUpCircle, Trash2, AlertCircle, Activity } from 'lucide-react';
@@ -6,8 +7,7 @@ import Pagination from '../components/Pagination';
 import { getGradosByDisciplina, DISCIPLINAS, getDisciplinaColor } from '../utils/constants';
 
 export default function Cinturones() {
-  const [alumnos, setAlumnos] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -36,65 +36,57 @@ export default function Cinturones() {
   const itemsPerPage = 20;
 
   useEffect(() => {
-    fetchData();
-  }, []);
-
-  useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, beltFilter, disciplinaFilter]);
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const { data: rawData, error } = await supabase
-        .from('alumnos')
-        .select(`
-          *,
-          asistencias ( fecha_asistencia, estado ),
-          historial_cinturones ( id, cinturon_anterior, cinturon_nuevo, fecha_examen, comentarios )
-        `)
-        .order('fecha_registro', { ascending: false });
+  const fetchCinturonesData = async () => {
+    const { data: rawData, error } = await supabase
+      .from('alumnos')
+      .select(`
+        *,
+        asistencias ( fecha_asistencia, estado ),
+        historial_cinturones ( id, cinturon_anterior, cinturon_nuevo, fecha_examen, comentarios )
+      `)
+      .order('fecha_registro', { ascending: false });
 
-      if (error) throw error;
+    if (error) throw error;
 
-      const data = (rawData || []).filter(a => a.estado !== 'Inactivo');
+    const data = (rawData || []).filter(a => a.estado !== 'Inactivo');
 
-      const processedAlumnos = data.map(a => {
-        const historial = [...(a.historial_cinturones || [])].sort((x, y) => new Date(y.fecha_examen) - new Date(x.fecha_examen));
+    return data.map(a => {
+      const historial = [...(a.historial_cinturones || [])].sort((x, y) => new Date(y.fecha_examen) - new Date(x.fecha_examen));
 
-        // Determinar la fecha desde la cual contar asistencias
-        let fechaReferencia = new Date(a.fecha_registro);
-        if (historial.length > 0) {
-          fechaReferencia = new Date(historial[0].fecha_examen);
-        }
+      // Determinar la fecha desde la cual contar asistencias
+      let fechaReferencia = new Date(a.fecha_registro);
+      if (historial.length > 0) {
+        fechaReferencia = new Date(historial[0].fecha_examen);
+      }
 
-        // Asegurarnos de comparar solo fechas sin hora
-        fechaReferencia.setHours(0, 0, 0, 0);
+      // Asegurarnos de comparar solo fechas sin hora
+      fechaReferencia.setHours(0, 0, 0, 0);
 
-        const clasesAcumuladas = (a.asistencias || []).filter(asist => {
-          if (asist.estado !== 'Presente') return false; // CORRECCIÓN: El estado en la BD es 'Presente'
-          const fechaAsist = new Date(asist.fecha_asistencia);
-          fechaAsist.setHours(0, 0, 0, 0);
-          return fechaAsist >= fechaReferencia;
-        }).length;
+      const clasesAcumuladas = (a.asistencias || []).filter(asist => {
+        if (asist.estado !== 'Presente') return false; // CORRECCIÓN: El estado en la BD es 'Presente'
+        const fechaAsist = new Date(asist.fecha_asistencia);
+        fechaAsist.setHours(0, 0, 0, 0);
+        return fechaAsist >= fechaReferencia;
+      }).length;
 
-        const clasesTotales = (a.asistencias || []).filter(asist => asist.estado === 'Presente').length;
+      const clasesTotales = (a.asistencias || []).filter(asist => asist.estado === 'Presente').length;
 
-        return {
-          ...a,
-          historial,
-          clasesAcumuladas,
-          clasesTotales
-        };
-      });
-
-      setAlumnos(processedAlumnos);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    } finally {
-      setLoading(false);
-    }
+      return {
+        ...a,
+        historial,
+        clasesAcumuladas,
+        clasesTotales
+      };
+    });
   };
+
+  const { data: alumnos = [], isLoading: loading } = useQuery({
+    queryKey: ['cinturonesData'],
+    queryFn: fetchCinturonesData
+  });
 
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -152,7 +144,7 @@ export default function Cinturones() {
       if (updateError) throw updateError;
 
       setIsAscensoModalOpen(false);
-      await fetchData();
+      queryClient.invalidateQueries({ queryKey: ['cinturonesData'] });
     } catch (error) {
       console.error('Error saving ascenso:', error);
       alert('Error al registrar el ascenso.');
@@ -191,7 +183,7 @@ export default function Cinturones() {
 
       setDeleteAscensoRegistro(null);
       // setIsHistoryModalOpen(false); // No cerramos el historial para que vea el cambio
-      await fetchData();
+      queryClient.invalidateQueries({ queryKey: ['cinturonesData'] });
       
       // Actualizar el selectedAlumno para que se refleje inmediatamente en el modal de historial
       setSelectedAlumno(prev => {
