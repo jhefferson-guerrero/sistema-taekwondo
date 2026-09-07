@@ -5,21 +5,45 @@ import { Loader2 } from 'lucide-react';
 
 export default function ProtectedRoute({ children, allowedRoles }) {
   const [session, setSession] = useState(null);
+  const [userRole, setUserRole] = useState(null);
   const [loading, setLoading] = useState(true);
   const location = useLocation();
 
   useEffect(() => {
     // Verificar la sesión actual
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const checkSessionAndRole = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
+      
+      if (session) {
+        const { data: roleData } = await supabase
+          .from('usuarios_roles')
+          .select('role')
+          .eq('id', session.user.id)
+          .single();
+        
+        setUserRole(roleData?.role || 'admin');
+      }
       setLoading(false);
-    });
+    };
+
+    checkSessionAndRole();
 
     // Escuchar cambios en la autenticación
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
+    } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
+      setSession(newSession);
+      if (newSession) {
+        const { data: roleData } = await supabase
+          .from('usuarios_roles')
+          .select('role')
+          .eq('id', newSession.user.id)
+          .single();
+        setUserRole(roleData?.role || 'admin');
+      } else {
+        setUserRole(null);
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -36,8 +60,6 @@ export default function ProtectedRoute({ children, allowedRoles }) {
   if (!session) {
     return <Navigate to="/login" replace />;
   }
-
-  const userRole = session.user?.user_metadata?.role || 'admin'; // Default to admin if no role is specified
 
   if (allowedRoles && !allowedRoles.includes(userRole)) {
     // Redirigir según el rol real del usuario

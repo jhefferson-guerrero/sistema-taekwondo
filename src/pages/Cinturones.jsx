@@ -237,7 +237,7 @@ export default function Cinturones() {
         </header>
 
         {/* Toolbar Section */}
-        <div className="flex flex-col sm:flex-row items-center gap-4 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
+        <div className="flex flex-col sm:flex-row items-center gap-4">
           <div className="relative w-full sm:w-96 group/search">
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
               <Search className="w-4 h-4 text-slate-400 group-focus-within/search:text-red-600 dark:text-white/40 dark:group-focus-within/search:text-red-500 transition-colors" />

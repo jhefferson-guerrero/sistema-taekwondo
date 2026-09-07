@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createPortal } from 'react-dom';
 import { supabase } from '../services/supabaseClient';
-import { Search, Plus, Minus, X, CheckCircle, Calendar, DollarSign, CreditCard, Trash2, Edit2, Loader2, FileText, ArrowRight, AlertCircle } from 'lucide-react';
+import { Search, Plus, Minus, X, CheckCircle, Calendar, DollarSign, CreditCard, Trash2, Edit2, Loader2, FileText, ArrowRight, AlertCircle, Filter } from 'lucide-react';
 import Pagination from '../components/Pagination';
 
 const getTodayStr = () => {
@@ -19,6 +19,7 @@ export default function IngresosExtra() {
   const [deleting, setDeleting] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState('');
+  const [metodoFilter, setMetodoFilter] = useState('Todos');
 
   // Form State
   const [formData, setFormData] = useState({
@@ -36,7 +37,7 @@ export default function IngresosExtra() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm]);
+  }, [searchTerm, metodoFilter]);
 
   const fetchIngresosData = async () => {
     const { data, error } = await supabase
@@ -152,9 +153,9 @@ export default function IngresosExtra() {
   };
 
   const filteredIngresos = ingresos.filter(ing => {
-    if (!searchTerm) return true;
-    return ing.concepto.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (ing.notas && ing.notas.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesSearch = !searchTerm || ing.concepto.toLowerCase().includes(searchTerm.toLowerCase()) || (ing.notas && ing.notas.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesMetodo = metodoFilter === 'Todos' || ing.metodo_pago === metodoFilter;
+    return matchesSearch && matchesMetodo;
   });
 
   const totalPages = Math.ceil(filteredIngresos.length / itemsPerPage);
@@ -192,7 +193,7 @@ export default function IngresosExtra() {
 
       {/* Filtros */}
       <div className="flex flex-col sm:flex-row gap-4 w-full relative z-10">
-        <div className="relative group/search w-full sm:max-w-md">
+        <div className="relative w-full sm:w-96 group/search">
           <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
             <Search className="w-4 h-4 text-slate-400 group-focus-within/search:text-red-600 dark:text-white/40 dark:group-focus-within/search:text-red-500 transition-colors" />
           </div>
@@ -203,6 +204,23 @@ export default function IngresosExtra() {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl py-3 pl-11 pr-4 focus:outline-none focus:border-red-600 dark:focus:border-red-500 transition-all duration-300 ease-in-out shadow-sm"
           />
+        </div>
+
+        <div className="relative w-full sm:w-56 group/filter">
+          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <Filter className="w-4 h-4 text-slate-400 group-focus-within/filter:text-red-600 dark:text-white/40 dark:group-focus-within/filter:text-red-500 transition-all duration-300 ease-in-out" />
+          </div>
+          <select
+            value={metodoFilter}
+            onChange={(e) => setMetodoFilter(e.target.value)}
+            className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl py-3 pl-11 pr-4 focus:outline-none focus:border-red-600 dark:focus:border-red-500 transition-all duration-300 ease-in-out shadow-sm appearance-none"
+          >
+            <option value="Todos">Todos los métodos</option>
+            <option value="Efectivo">Efectivo</option>
+            <option value="Transferencia">Transferencia</option>
+            <option value="Yape">Yape</option>
+            <option value="Plin">Plin</option>
+          </select>
         </div>
       </div>
 
