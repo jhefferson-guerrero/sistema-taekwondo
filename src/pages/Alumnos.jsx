@@ -504,10 +504,13 @@ export default function Alumnos() {
       if (todosPagos && todosPagos.length > 0) {
         // Encontrar el pago con mayor fecha de vencimiento
         const latestPago = [...todosPagos].sort((x, y) => new Date(y.fecha_vencimiento) - new Date(x.fecha_vencimiento))[0];
+        // Extraer las fechas congeladas para excluirlas del conteo
+        const fechasCongeladas = (asistenciasData || []).filter(a => a.estado === 'Congelado').map(a => a.fecha_asistencia);
         clasesRestantes = calcularClasesRestantes(
           latestPago.fecha_inicio,
           latestPago.fecha_vencimiento,
-          alumno.horarios?.dias || []
+          alumno.horarios?.dias || [],
+          fechasCongeladas
         );
       }
 

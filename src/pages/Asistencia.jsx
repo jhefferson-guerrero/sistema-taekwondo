@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createPortal } from 'react-dom';
 import { supabase } from '../services/supabaseClient';
 import { DISCIPLINAS, getGradosByDisciplina, getDisciplinaColor } from '../utils/constants';
-import { Search, Filter, CalendarCheck, Clock, User, CheckCircle, XCircle, AlertCircle, Plus, ChevronLeft, ChevronRight, Loader2, Users, Calendar, Check, X, Activity } from 'lucide-react';
+import { Search, Filter, CalendarCheck, Clock, User, CheckCircle, XCircle, AlertCircle, Plus, ChevronLeft, ChevronRight, Loader2, Users, Calendar, Check, X, Activity, Snowflake } from 'lucide-react';
 import { calcularClasesRestantes } from '../utils/membresiaUtils';
 import Pagination from '../components/Pagination';
 
@@ -54,7 +54,7 @@ export default function Asistencia() {
         *,
         pagos ( fecha_inicio, fecha_vencimiento ),
         horarios ( dias ),
-        asistencias ( id, fecha_asistencia )
+        asistencias ( id, fecha_asistencia, estado )
       `)
       .order('nombre', { ascending: true });
 
@@ -75,21 +75,30 @@ export default function Asistencia() {
       let clasesRestantes = 0;
       if (a.pagos && a.pagos.length > 0) {
         const latestPago = [...a.pagos].sort((x, y) => new Date(y.fecha_vencimiento) - new Date(x.fecha_vencimiento))[0];
+        const fechasCongeladas = (a.asistencias || []).filter(att => att.estado === 'Congelado').map(att => att.fecha_asistencia);
         clasesRestantes = calcularClasesRestantes(
           latestPago.fecha_inicio,
           latestPago.fecha_vencimiento,
-          a.horarios?.dias || []
+          a.horarios?.dias || [],
+          fechasCongeladas
         );
       }
 
       let ultima_asistencia = null;
+      let isFrozenToday = false;
       if (a.asistencias && a.asistencias.length > 0) {
         const sorted = [...a.asistencias].sort((x, y) => new Date(y.fecha_asistencia) - new Date(x.fecha_asistencia));
-        ultima_asistencia = sorted[0].fecha_asistencia;
+        const presentes = sorted.filter(att => !att.estado || att.estado === 'Presente');
+        ultima_asistencia = presentes.length > 0 ? presentes[0].fecha_asistencia : null;
 
-        const hasAttendedToday = sorted.some(att => {
+        const hasAttendedToday = presentes.some(att => {
           const time = new Date(att.fecha_asistencia).getTime();
           return time >= targetStart && time <= targetEnd;
+        });
+
+        isFrozenToday = sorted.some(att => {
+          const time = new Date(att.fecha_asistencia).getTime();
+          return time >= targetStart && time <= targetEnd && att.estado === 'Congelado';
         });
 
         if (hasAttendedToday) {
@@ -100,7 +109,8 @@ export default function Asistencia() {
       return {
         ...a,
         clases_restantes: clasesRestantes,
-        ultima_asistencia
+        ultima_asistencia,
+        is_frozen_today: isFrozenToday
       };
     });
 
@@ -162,6 +172,7 @@ export default function Asistencia() {
         .from('asistencias')
         .delete()
         .eq('alumno_id', undoAlumno.id)
+        .or('estado.eq.Presente,estado.is.null')
         .gte('fecha_asistencia', targetStartIso)
         .lte('fecha_asistencia', targetEndIso);
 
@@ -361,28 +372,35 @@ export default function Asistencia() {
                           )}
                         </td>
                         <td className="px-8 py-5 text-center w-[140px]">
-                          <button
-                            onClick={() => hasAttended ? setUndoAlumno(alumno) : handleMarcarAsistencia(alumno.id)}
-                            disabled={isMarking}
-                            className={`group/btn relative inline-flex items-center justify-center gap-2 w-[112px] h-[40px] rounded-xl text-sm font-semibold transition-all duration-500 overflow-hidden ${hasAttended
-                              ? 'bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.3)] hover:bg-emerald-600 disabled:opacity-50'
-                              : 'bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-white hover:border-red-600 hover:text-red-700 dark:hover:border-red-600 dark:hover:text-red-500 shadow-sm active:scale-[0.98]'
-                              }`}
-                          >
-                            {isMarking ? (
-                              <Loader2 className="w-5 h-5 animate-spin" />
-                            ) : hasAttended ? (
-                              <>
-                                <Check className="w-4 h-4" strokeWidth={3} />
-                                <span>Asistió</span>
-                              </>
-                            ) : (
-                              <>
-                                <CheckCircle className="w-4 h-4 group-hover/btn:scale-110 transition-transform duration-300" />
-                                <span>Marcar</span>
-                              </>
-                            )}
-                          </button>
+                          {alumno.is_frozen_today ? (
+                            <div className="inline-flex items-center justify-center gap-1.5 w-[112px] h-[40px] rounded-xl text-xs font-bold uppercase tracking-wider bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-white/10 cursor-not-allowed" title="Membresía Congelada">
+                              <Snowflake className="w-3.5 h-3.5" strokeWidth={2.5} />
+                              <span>Congelado</span>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => hasAttended ? setUndoAlumno(alumno) : handleMarcarAsistencia(alumno.id)}
+                              disabled={isMarking}
+                              className={`group/btn relative inline-flex items-center justify-center gap-2 w-[112px] h-[40px] rounded-xl text-sm font-semibold transition-all duration-500 overflow-hidden ${hasAttended
+                                ? 'bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.3)] hover:bg-emerald-600 disabled:opacity-50'
+                                : 'bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-white hover:border-red-600 hover:text-red-700 dark:hover:border-red-600 dark:hover:text-red-500 shadow-sm active:scale-[0.98]'
+                                }`}
+                            >
+                              {isMarking ? (
+                                <Loader2 className="w-5 h-5 animate-spin" />
+                              ) : hasAttended ? (
+                                <>
+                                  <Check className="w-4 h-4" strokeWidth={3} />
+                                  <span>Asistió</span>
+                                </>
+                              ) : (
+                                <>
+                                  <CheckCircle className="w-4 h-4 group-hover/btn:scale-110 transition-transform duration-300" />
+                                  <span>Marcar</span>
+                                </>
+                              )}
+                            </button>
+                          )}
                         </td>
                       </tr>
                     );

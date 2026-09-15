@@ -19,13 +19,14 @@ export const FERIADOS_PERU = [
 const diasSemana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 
 /**
- * Calcula las clases restantes basado en fechas, ignorando feriados y asistencias pasadas.
+ * Calcula las clases restantes basado en fechas, ignorando feriados y días congelados.
  * @param {string} fechaInicio - 'YYYY-MM-DD'
  * @param {string} fechaVencimiento - 'YYYY-MM-DD'
  * @param {Array<string>} diasHorario - ['Lunes', 'Miércoles']
+ * @param {Array<string>} fechasCongeladas - Array de ISO strings de días congelados
  * @returns {number} cantidad de clases restantes
  */
-export const calcularClasesRestantes = (fechaInicio, fechaVencimiento, diasHorario = []) => {
+export const calcularClasesRestantes = (fechaInicio, fechaVencimiento, diasHorario = [], fechasCongeladas = []) => {
   if (!fechaInicio || !fechaVencimiento || !diasHorario || diasHorario.length === 0) return 0;
 
   const now = new Date();
@@ -42,6 +43,17 @@ export const calcularClasesRestantes = (fechaInicio, fechaVencimiento, diasHorar
     return 0;
   }
 
+  // Construir un Set de fechas congeladas en formato 'YYYY-MM-DD' para búsqueda O(1)
+  const frozenDatesSet = new Set(
+    fechasCongeladas.map(iso => {
+      const d = new Date(iso);
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    })
+  );
+
   let count = 0;
 
   while (currentDate <= endParam) {
@@ -49,12 +61,14 @@ export const calcularClasesRestantes = (fechaInicio, fechaVencimiento, diasHorar
     
     // Si es un día de clases
     if (diasHorario.includes(dayName)) {
-      // Verificar feriados
+      const y = currentDate.getFullYear();
       const mm = String(currentDate.getMonth() + 1).padStart(2, '0');
       const dd = String(currentDate.getDate()).padStart(2, '0');
       const dateKey = `${mm}-${dd}`;
-      
-      if (!FERIADOS_PERU.includes(dateKey)) {
+      const fullDateKey = `${y}-${mm}-${dd}`;
+
+      // Ignorar feriados Y días congelados
+      if (!FERIADOS_PERU.includes(dateKey) && !frozenDatesSet.has(fullDateKey)) {
         count++;
       }
     }
@@ -66,15 +80,27 @@ export const calcularClasesRestantes = (fechaInicio, fechaVencimiento, diasHorar
 };
 
 /**
- * Calcula el total de clases en un rango de fechas estricto, ignorando feriados.
+ * Calcula el total de clases en un rango de fechas estricto, ignorando feriados y días congelados.
+ * @param {Array<string>} fechasCongeladas - Array de ISO strings de días congelados
  */
-export const calcularClasesEnRango = (fechaInicio, fechaFin, diasHorario = []) => {
+export const calcularClasesEnRango = (fechaInicio, fechaFin, diasHorario = [], fechasCongeladas = []) => {
   if (!fechaInicio || !fechaFin || !diasHorario || diasHorario.length === 0) return 0;
 
   const startParam = new Date(`${fechaInicio}T00:00:00`); 
   const endParam = new Date(`${fechaFin}T23:59:59`); 
   
   if (startParam > endParam) return 0;
+
+  // Construir un Set de fechas congeladas en formato 'YYYY-MM-DD' para búsqueda O(1)
+  const frozenDatesSet = new Set(
+    fechasCongeladas.map(iso => {
+      const d = new Date(iso);
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    })
+  );
 
   let currentDate = new Date(startParam);
   let count = 0;
@@ -83,11 +109,13 @@ export const calcularClasesEnRango = (fechaInicio, fechaFin, diasHorario = []) =
     const dayName = diasSemana[currentDate.getDay()];
     
     if (diasHorario.includes(dayName)) {
+      const y = currentDate.getFullYear();
       const mm = String(currentDate.getMonth() + 1).padStart(2, '0');
       const dd = String(currentDate.getDate()).padStart(2, '0');
       const dateKey = `${mm}-${dd}`;
+      const fullDateKey = `${y}-${mm}-${dd}`;
       
-      if (!FERIADOS_PERU.includes(dateKey)) {
+      if (!FERIADOS_PERU.includes(dateKey) && !frozenDatesSet.has(fullDateKey)) {
         count++;
       }
     }

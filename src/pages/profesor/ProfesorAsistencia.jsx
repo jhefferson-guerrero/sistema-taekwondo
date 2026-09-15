@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../../services/supabaseClient';
-import { ChevronLeft, CheckCircle, Loader2, Users, Check } from 'lucide-react';
+import { ChevronLeft, CheckCircle, Loader2, Users, Check, Snowflake } from 'lucide-react';
 import { getDisciplinaColor } from '../../utils/constants';
 
 const getLocalDateString = () => {
@@ -44,7 +44,7 @@ export default function ProfesorAsistencia() {
         .select(`
           id, nombre, apellidos, disciplina, estado, cinturon,
           horarios!inner(id),
-          asistencias ( id, fecha_asistencia )
+          asistencias ( id, fecha_asistencia, estado )
         `)
         .eq('estado', 'Activo')
         .eq('horarios.id', horarioId)
@@ -62,17 +62,23 @@ export default function ProfesorAsistencia() {
       const attendedTodaySet = new Set();
 
       const alumnosProcessed = (alumnosDataRaw || []).map(a => {
+        let isFrozenToday = false;
         if (a.asistencias && a.asistencias.length > 0) {
           const hasAttendedToday = a.asistencias.some(att => {
             const time = new Date(att.fecha_asistencia).getTime();
-            return time >= targetStart && time <= targetEnd;
+            return time >= targetStart && time <= targetEnd && (!att.estado || att.estado === 'Presente');
+          });
+
+          isFrozenToday = a.asistencias.some(att => {
+            const time = new Date(att.fecha_asistencia).getTime();
+            return time >= targetStart && time <= targetEnd && att.estado === 'Congelado';
           });
 
           if (hasAttendedToday) {
             attendedTodaySet.add(a.id);
           }
         }
-        return a;
+        return { ...a, is_frozen_today: isFrozenToday };
       });
 
       setAsistenciasHoy(attendedTodaySet);
@@ -126,6 +132,7 @@ export default function ProfesorAsistencia() {
         .from('asistencias')
         .delete()
         .eq('alumno_id', alumnoId)
+        .or('estado.eq.Presente,estado.is.null')
         .gte('fecha_asistencia', targetStartIso)
         .lte('fecha_asistencia', targetEndIso);
 
@@ -217,11 +224,17 @@ export default function ProfesorAsistencia() {
                 </div>
 
                 <button
-                  onClick={() => hasAttended ? handleDesmarcarAsistencia(alumno.id) : handleMarcarAsistencia(alumno.id)}
-                  disabled={isMarking}
+                  onClick={() => {
+                    if (alumno.is_frozen_today) return;
+                    hasAttended ? handleDesmarcarAsistencia(alumno.id) : handleMarcarAsistencia(alumno.id);
+                  }}
+                  disabled={isMarking || alumno.is_frozen_today}
+                  title={alumno.is_frozen_today ? "Membresía Congelada" : ""}
                   className={`relative w-14 h-14 rounded-full flex items-center justify-center shrink-0 transition-all duration-300 active:scale-95 ${
                     isMarking 
                       ? 'bg-slate-200 dark:bg-white/10'
+                      : alumno.is_frozen_today
+                        ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed border-2 border-slate-200 dark:border-slate-700/50'
                       : hasAttended
                         ? 'bg-emerald-500 text-white hover:bg-emerald-600'
                         : 'bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-400 hover:text-slate-600 dark:text-white/30 dark:hover:text-white border-2 border-transparent hover:border-slate-300 dark:hover:border-white/20'
@@ -229,6 +242,8 @@ export default function ProfesorAsistencia() {
                 >
                   {isMarking ? (
                     <Loader2 className="w-6 h-6 animate-spin" strokeWidth={3} />
+                  ) : alumno.is_frozen_today ? (
+                    <Snowflake className="w-7 h-7 opacity-80" strokeWidth={1.5} />
                   ) : hasAttended ? (
                     <Check className="w-8 h-8" strokeWidth={3} />
                   ) : (

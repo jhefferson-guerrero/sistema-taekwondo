@@ -105,23 +105,33 @@ export const generarHistorialPDF = async (alumnoId) => {
       
       const fechaFinCalculo = (hoyStr < ultimoPago.fecha_vencimiento) ? hoyStr : ultimoPago.fecha_vencimiento;
       
-      const clasesPasadas = calcularClasesEnRango(ultimoPago.fecha_inicio, fechaFinCalculo, alumno.horarios.dias);
+      // Extraer fechas congeladas para excluirlas del conteo de clases
+      const fechasCongeladas = (alumno.asistencias || []).filter(a => a.estado === 'Congelado').map(a => a.fecha_asistencia);
+      
+      // Clases Totales = todo el periodo completo (excluyendo congeladas y feriados)
+      const clasesTotales = calcularClasesEnRango(ultimoPago.fecha_inicio, ultimoPago.fecha_vencimiento, alumno.horarios.dias, fechasCongeladas);
+      
+      // Clases que ya pasaron (desde inicio hasta hoy)
+      const clasesPasadas = calcularClasesEnRango(ultimoPago.fecha_inicio, fechaFinCalculo, alumno.horarios.dias, fechasCongeladas);
       
       const targetStart = new Date(`${ultimoPago.fecha_inicio}T00:00:00`).getTime();
-      const targetEnd = new Date(`${fechaFinCalculo}T23:59:59`).getTime();
+      const targetEnd = new Date(`${ultimoPago.fecha_vencimiento}T23:59:59`).getTime();
 
+      // Solo contar asistencias reales (Presente), no Congelado
       const asistenciasEnPeriodo = (alumno.asistencias || []).filter(a => {
         if (!a.fecha_asistencia) return false;
+        if (a.estado === 'Congelado') return false;
         const t = new Date(a.fecha_asistencia).getTime();
         return t >= targetStart && t <= targetEnd;
       }).length;
 
       const faltas = Math.max(0, clasesPasadas - asistenciasEnPeriodo);
+      const pendientes = Math.max(0, clasesTotales - clasesPasadas);
 
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(14);
       doc.setTextColor(...darkGray);
-      doc.text('Resumen del Mes Actual', 14, startY);
+      doc.text('Resumen de Membresía', 14, startY);
       
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(11);
@@ -129,7 +139,7 @@ export const generarHistorialPDF = async (alumnoId) => {
       doc.text(`Periodo: ${new Date(ultimoPago.fecha_inicio).toLocaleDateString()} al ${new Date(ultimoPago.fecha_vencimiento).toLocaleDateString()}`, 14, startY + 8);
       
       doc.setFont('helvetica', 'normal');
-      doc.text(`Clases Totales: ${clasesPasadas}   |   Asistencias: ${asistenciasEnPeriodo}   |   Faltas: ${faltas}`, 14, startY + 14);
+      doc.text(`Clases Totales: ${clasesTotales}   |   Asistencias: ${asistenciasEnPeriodo}   |   Faltas: ${faltas}   |   Pendientes: ${pendientes}`, 14, startY + 14);
       
       startY += 26;
     }
@@ -174,7 +184,10 @@ export const generarHistorialPDF = async (alumnoId) => {
     doc.setTextColor(...darkGray);
     doc.text('Historial de Asistencias', 14, startY);
 
-    const asistenciasData = (alumno.asistencias || [])
+    // Filtrar solo asistencias reales (excluir Congelado)
+    const asistenciasReales = (alumno.asistencias || []).filter(a => a.estado !== 'Congelado');
+
+    const asistenciasData = asistenciasReales
       .sort((a, b) => new Date(b.fecha_asistencia) - new Date(a.fecha_asistencia))
       .map((a, index) => [
         index + 1,
