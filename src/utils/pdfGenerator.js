@@ -136,7 +136,7 @@ export const generarHistorialPDF = async (alumnoId) => {
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(11);
       doc.setTextColor(...darkGray);
-      doc.text(`Periodo: ${new Date(ultimoPago.fecha_inicio).toLocaleDateString()} al ${new Date(ultimoPago.fecha_vencimiento).toLocaleDateString()}`, 14, startY + 8);
+      doc.text(`Periodo: ${new Date(`${ultimoPago.fecha_inicio}T00:00:00`).toLocaleDateString()} al ${new Date(`${ultimoPago.fecha_vencimiento}T00:00:00`).toLocaleDateString()}`, 14, startY + 8);
       
       doc.setFont('helvetica', 'normal');
       doc.text(`Clases Totales: ${clasesTotales}   |   Asistencias: ${asistenciasEnPeriodo}   |   Faltas: ${faltas}   |   Pendientes: ${pendientes}`, 14, startY + 14);
@@ -156,7 +156,7 @@ export const generarHistorialPDF = async (alumnoId) => {
         p.fecha_pago ? new Date(p.fecha_pago).toLocaleDateString() : 'N/A',
         `S/ ${p.monto}`,
         p.metodo_pago || 'N/A',
-        `${p.fecha_inicio ? new Date(p.fecha_inicio).toLocaleDateString() : 'N/A'} - ${p.fecha_vencimiento ? new Date(p.fecha_vencimiento).toLocaleDateString() : 'N/A'}`
+        `${p.fecha_inicio ? new Date(`${p.fecha_inicio}T00:00:00`).toLocaleDateString() : 'N/A'} - ${p.fecha_vencimiento ? new Date(`${p.fecha_vencimiento}T00:00:00`).toLocaleDateString() : 'N/A'}`
       ]);
 
     autoTable(doc, {

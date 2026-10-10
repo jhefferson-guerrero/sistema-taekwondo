@@ -6,6 +6,11 @@ import { Search, Filter, Award, Loader2, X, Users, History, ArrowUpCircle, Trash
 import Pagination from '../components/Pagination';
 import { getGradosByDisciplina, DISCIPLINAS, getDisciplinaColor } from '../utils/constants';
 
+const getTodayStr = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
 export default function Cinturones() {
   const queryClient = useQueryClient();
 
@@ -24,7 +29,7 @@ export default function Cinturones() {
   // Form State
   const [formData, setFormData] = useState({
     cinturon_nuevo: '',
-    fecha_examen: new Date().toISOString().split('T')[0],
+    fecha_examen: getTodayStr(),
     comentarios: ''
   });
   const [saving, setSaving] = useState(false);
@@ -104,7 +109,7 @@ export default function Cinturones() {
 
     setFormData({
       cinturon_nuevo: sugerido,
-      fecha_examen: new Date().toISOString().split('T')[0],
+      fecha_examen: getTodayStr(),
       comentarios: ''
     });
     setIsAscensoModalOpen(true);

@@ -1,8 +1,7 @@
-// Diccionario de Feriados Nacionales de Perú (Formato 'MM-DD')
-export const FERIADOS_PERU = [
+// Feriados Nacionales de Perú con fecha fija (Formato 'MM-DD').
+// Jueves y Viernes Santo cambian cada año: se calculan en getSemanaSanta().
+export const FERIADOS_FIJOS_PERU = [
   '01-01', // Año Nuevo
-  '03-28', // Jueves Santo
-  '03-29', // Viernes Santo
   '05-01', // Día del Trabajador
   '06-29', // San Pedro y San Pablo
   '07-23', // Día de la Fuerza Aérea
@@ -17,6 +16,49 @@ export const FERIADOS_PERU = [
 ];
 
 const diasSemana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+
+const formatMMDD = (date) =>
+  `${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+
+const semanaSantaCache = new Map();
+
+/**
+ * Devuelve ['MM-DD', 'MM-DD'] con Jueves y Viernes Santo del año indicado.
+ * Usa el algoritmo gregoriano anónimo para obtener el Domingo de Pascua.
+ */
+const getSemanaSanta = (year) => {
+  if (semanaSantaCache.has(year)) return semanaSantaCache.get(year);
+
+  const a = year % 19;
+  const b = Math.floor(year / 100);
+  const c = year % 100;
+  const d = Math.floor(b / 4);
+  const e = b % 4;
+  const f = Math.floor((b + 8) / 25);
+  const g = Math.floor((b - f + 1) / 3);
+  const h = (19 * a + b - d - g + 15) % 30;
+  const i = Math.floor(c / 4);
+  const k = c % 4;
+  const l = (32 + 2 * e + 2 * i - h - k) % 7;
+  const m = Math.floor((a + 11 * h + 22 * l) / 451);
+  const month = Math.floor((h + l - 7 * m + 114) / 31); // 3 = marzo, 4 = abril
+  const day = ((h + l - 7 * m + 114) % 31) + 1;
+
+  const juevesSanto = formatMMDD(new Date(year, month - 1, day - 3));
+  const viernesSanto = formatMMDD(new Date(year, month - 1, day - 2));
+
+  const result = [juevesSanto, viernesSanto];
+  semanaSantaCache.set(year, result);
+  return result;
+};
+
+/**
+ * Indica si una fecha (objeto Date local) es feriado nacional en Perú.
+ */
+export const esFeriado = (fecha) => {
+  const key = formatMMDD(fecha);
+  return FERIADOS_FIJOS_PERU.includes(key) || getSemanaSanta(fecha.getFullYear()).includes(key);
+};
 
 /**
  * Calcula las clases restantes basado en fechas, ignorando feriados y días congelados.
@@ -64,11 +106,10 @@ export const calcularClasesRestantes = (fechaInicio, fechaVencimiento, diasHorar
       const y = currentDate.getFullYear();
       const mm = String(currentDate.getMonth() + 1).padStart(2, '0');
       const dd = String(currentDate.getDate()).padStart(2, '0');
-      const dateKey = `${mm}-${dd}`;
       const fullDateKey = `${y}-${mm}-${dd}`;
 
       // Ignorar feriados Y días congelados
-      if (!FERIADOS_PERU.includes(dateKey) && !frozenDatesSet.has(fullDateKey)) {
+      if (!esFeriado(currentDate) && !frozenDatesSet.has(fullDateKey)) {
         count++;
       }
     }
@@ -112,10 +153,9 @@ export const calcularClasesEnRango = (fechaInicio, fechaFin, diasHorario = [], f
       const y = currentDate.getFullYear();
       const mm = String(currentDate.getMonth() + 1).padStart(2, '0');
       const dd = String(currentDate.getDate()).padStart(2, '0');
-      const dateKey = `${mm}-${dd}`;
       const fullDateKey = `${y}-${mm}-${dd}`;
-      
-      if (!FERIADOS_PERU.includes(dateKey) && !frozenDatesSet.has(fullDateKey)) {
+
+      if (!esFeriado(currentDate) && !frozenDatesSet.has(fullDateKey)) {
         count++;
       }
     }

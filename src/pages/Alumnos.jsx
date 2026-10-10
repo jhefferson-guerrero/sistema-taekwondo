@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import { supabase } from '../services/supabaseClient';
 import { DISCIPLINAS, getGradosByDisciplina, getDisciplinaColor } from '../utils/constants';
 import { Plus, Users, X, Loader2, Calendar, Edit2, Trash2, AlertCircle, Search, Filter, Eye, ChevronLeft, ChevronRight, Snowflake, Sun, RefreshCcw, Activity, Download, MoreVertical } from 'lucide-react';
-import { calcularClasesRestantes, FERIADOS_PERU } from '../utils/membresiaUtils';
+import { calcularClasesRestantes, esFeriado } from '../utils/membresiaUtils';
 import { generarHistorialPDF } from '../utils/pdfGenerator';
 import Pagination from '../components/Pagination';
 
@@ -1297,11 +1297,10 @@ export default function Alumnos() {
                           const mm = String(month + 1).padStart(2, '0');
                           const dd = String(d).padStart(2, '0');
                           const dateStr = `${year}-${mm}-${dd}`;
-                          const dateKey = `${mm}-${dd}`;
                           const nombreDia = diasSemana[dateObj.getDay()];
 
                           const isWithinRange = inicioTime && finTime && cellTime >= inicioTime && cellTime <= finTime;
-                          const shouldAttend = isWithinRange && diasTurno.includes(nombreDia) && !FERIADOS_PERU.includes(dateKey);
+                          const shouldAttend = isWithinRange && diasTurno.includes(nombreDia) && !esFeriado(dateObj);
 
                           const estadoAsistencia = profileStats.asistenciasMes[dateStr];
                           const isPastStrict = cellTime < todayTime; // Strictly before today
