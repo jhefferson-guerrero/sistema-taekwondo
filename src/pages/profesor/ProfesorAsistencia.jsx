@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../../services/supabaseClient';
-import { ChevronLeft, CheckCircle, Loader2, Users, Check, Snowflake } from 'lucide-react';
+import { ChevronLeft, CheckCircle, Loader2, Users, Check, Snowflake, UserPlus } from 'lucide-react';
 import { getDisciplinaColor } from '../../utils/constants';
+
+const METODOS_PAGO_LIBRE = ['Efectivo', 'Yape', 'Plin'];
 
 const getLocalDateString = () => {
   const d = new Date();
@@ -19,6 +22,12 @@ export default function ProfesorAsistencia() {
   const [asistenciasHoy, setAsistenciasHoy] = useState(new Set());
   const [loading, setLoading] = useState(true);
   const [markingId, setMarkingId] = useState(null);
+
+  // Clase libre
+  const [isLibreModalOpen, setIsLibreModalOpen] = useState(false);
+  const [metodoLibre, setMetodoLibre] = useState('Efectivo');
+  const [savingLibre, setSavingLibre] = useState(false);
+  const [libresRegistradas, setLibresRegistradas] = useState(0);
 
   useEffect(() => {
     if (horarioId) {
@@ -151,6 +160,28 @@ export default function ProfesorAsistencia() {
     }
   };
 
+  const handleRegistrarClaseLibre = async () => {
+    try {
+      setSavingLibre(true);
+
+      const { error } = await supabase.rpc('registrar_clase_libre', {
+        p_horario_id: horarioId,
+        p_metodo_pago: metodoLibre
+      });
+
+      if (error) throw error;
+
+      setIsLibreModalOpen(false);
+      setMetodoLibre('Efectivo');
+      setLibresRegistradas(prev => prev + 1);
+    } catch (error) {
+      console.error('Error registering free class:', error);
+      alert('Error al registrar la clase libre.');
+    } finally {
+      setSavingLibre(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
@@ -254,6 +285,79 @@ export default function ProfesorAsistencia() {
             );
           })}
         </div>
+      )}
+
+      <div className="flex flex-col gap-3">
+        <button
+          onClick={() => setIsLibreModalOpen(true)}
+          className="flex items-center justify-center gap-3 w-full p-4 rounded-2xl border-2 border-dashed border-slate-300 dark:border-white/20 text-slate-700 dark:text-white/80 font-bold hover:border-red-600 hover:text-red-600 dark:hover:border-red-500 dark:hover:text-red-500 transition-all duration-300 active:scale-[0.98]"
+        >
+          <UserPlus className="w-6 h-6" />
+          Registrar clase libre
+        </button>
+
+        {libresRegistradas > 0 && (
+          <p className="text-center text-sm font-medium text-emerald-600 dark:text-emerald-400">
+            {libresRegistradas} {libresRegistradas === 1 ? 'clase libre registrada' : 'clases libres registradas'}
+          </p>
+        )}
+      </div>
+
+      {/* Modal - Registrar clase libre */}
+      {isLibreModalOpen && createPortal(
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/40 dark:bg-slate-800/60 backdrop-blur-md" onClick={() => !savingLibre && setIsLibreModalOpen(false)} />
+
+          <div className="relative w-full max-w-sm p-1.5 bg-slate-50/80 dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 rounded-[2rem] shadow-xl dark:shadow-2xl animate-in fade-in zoom-in-95 duration-300">
+            <div className="p-6 bg-white dark:bg-slate-800 rounded-[calc(2rem-0.375rem)] flex flex-col gap-6">
+              <div className="flex flex-col gap-2 text-center">
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white">Registrar clase libre</h3>
+                <p className="text-sm text-slate-700 dark:text-white/80">
+                  Se registrará <span className="font-semibold text-slate-900 dark:text-white">1 clase libre</span> en {horario?.nombre || 'esta clase'}.
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="text-xs uppercase tracking-widest text-slate-700 dark:text-white/80 font-medium ml-1">Método de pago</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {METODOS_PAGO_LIBRE.map((metodo) => (
+                    <button
+                      key={metodo}
+                      type="button"
+                      onClick={() => setMetodoLibre(metodo)}
+                      disabled={savingLibre}
+                      className={`py-3 px-2 rounded-xl text-sm font-bold transition-all border disabled:opacity-50 ${metodoLibre === metodo
+                        ? 'bg-slate-900 text-white border-slate-900 shadow-md dark:bg-white dark:text-black dark:border-white'
+                        : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 dark:bg-transparent dark:border-white/10 dark:text-white/60 dark:hover:bg-white/5'
+                        }`}
+                    >
+                      {metodo}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setIsLibreModalOpen(false)}
+                  disabled={savingLibre}
+                  className="flex-1 py-3 px-4 rounded-xl font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 dark:text-white dark:bg-white/5 dark:hover:bg-white/10 transition-all duration-300 disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleRegistrarClaseLibre}
+                  disabled={savingLibre}
+                  className="flex-1 py-3 px-4 rounded-xl font-medium text-white bg-red-600 hover:bg-red-700 transition-all duration-300 disabled:opacity-70 flex items-center justify-center gap-2"
+                >
+                  {savingLibre && <Loader2 className="w-4 h-4 animate-spin" />}
+                  <span>Registrar</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body
       )}
     </div>
   );
