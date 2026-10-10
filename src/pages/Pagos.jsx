@@ -11,12 +11,12 @@ const getTodayStr = () => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
 
-const getNextMonthStr = (dateStr) => {
+// Último día del mes de la fecha dada (ej. 2026-10-10 -> 2026-10-31)
+const getFinDeMesStr = (dateStr) => {
   if (!dateStr) return '';
   const d = new Date(`${dateStr}T00:00:00`);
-  d.setMonth(d.getMonth() + 1);
-  d.setDate(d.getDate() - 1);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const ultimoDia = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+  return `${ultimoDia.getFullYear()}-${String(ultimoDia.getMonth() + 1).padStart(2, '0')}-${String(ultimoDia.getDate()).padStart(2, '0')}`;
 };
 
 export default function Pagos() {
@@ -34,7 +34,7 @@ export default function Pagos() {
     alumno_id: '',
     monto: '',
     fecha_inicio: getTodayStr(),
-    fecha_vencimiento: getNextMonthStr(getTodayStr()),
+    fecha_vencimiento: getFinDeMesStr(getTodayStr()),
     metodo_pago: 'Efectivo'
   });
   const [saving, setSaving] = useState(false);
@@ -89,7 +89,7 @@ export default function Pagos() {
       setFormData({
         ...formData,
         fecha_inicio: value,
-        fecha_vencimiento: getNextMonthStr(value)
+        fecha_vencimiento: getFinDeMesStr(value)
       });
     } else {
       setFormData({ ...formData, [name]: value });
@@ -133,7 +133,7 @@ export default function Pagos() {
         alumno_id: '',
         monto: '',
         fecha_inicio: getTodayStr(),
-        fecha_vencimiento: getNextMonthStr(getTodayStr()),
+        fecha_vencimiento: getFinDeMesStr(getTodayStr()),
         metodo_pago: 'Efectivo'
       });
       setEditId(null);
@@ -152,7 +152,7 @@ export default function Pagos() {
       alumno_id: '',
       monto: '',
       fecha_inicio: getTodayStr(),
-      fecha_vencimiento: getNextMonthStr(getTodayStr()),
+      fecha_vencimiento: getFinDeMesStr(getTodayStr()),
       metodo_pago: 'Efectivo'
     });
     setAlumnoSearchTerm('');
@@ -165,7 +165,7 @@ export default function Pagos() {
       alumno_id: pago.alumno_id,
       monto: pago.monto,
       fecha_inicio: pago.fecha_inicio || getTodayStr(),
-      fecha_vencimiento: pago.fecha_vencimiento || getNextMonthStr(getTodayStr()),
+      fecha_vencimiento: pago.fecha_vencimiento || getFinDeMesStr(getTodayStr()),
       metodo_pago: pago.metodo_pago
     });
     const pagoAlumno = alumnos.find(a => a.id === pago.alumno_id);
