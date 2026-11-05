@@ -33,7 +33,7 @@ security definer
 set search_path = public
 as $$
 declare
-  v_precio constant numeric := 15;  -- <<< PRECIO FIJO DE UNA CLASE LIBRE (S/)
+  v_precio constant numeric := 20;  -- <<< PRECIO FIJO DE UNA CLASE LIBRE (S/)
   v_horario text;
 begin
   if coalesce(public.get_auth_role(), '') <> 'profesor' then
