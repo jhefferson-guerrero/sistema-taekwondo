@@ -28,6 +28,28 @@
 
 
 
+/* ===== ESQUEMA DE COLOR SEGÚN EL TEMA DE LA APP ===== */
+/* El tema de la app (clase .dark) no siempre coincide con el de Windows.
+   Sin esto, si el sistema está en oscuro y la app en claro, el navegador dibuja
+   el icono del calendario (y otros controles nativos) en blanco sobre fondo crema. */
+:root {
+  color-scheme: light;
+}
+
+:root.dark,
+.dark {
+  color-scheme: dark;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
 /* Barra de desplazamiento personalizada (Vertical y Horizontal) */
 .custom-scrollbar::-webkit-scrollbar {
   width: 14px; /* Más ancho para el padding invisible */
