@@ -441,15 +441,16 @@ export default function Pagos() {
                         setFormData({ ...formData, alumno_id: '' }); // reset selection if typing
                       }}
                       onFocus={() => setIsAlumnoDropdownOpen(true)}
-                      onBlur={() => {
-                        setTimeout(() => setIsAlumnoDropdownOpen(false), 200);
-                      }}
+                      onBlur={() => setIsAlumnoDropdownOpen(false)}
                       disabled={saving}
                       required={!formData.alumno_id}
                       className="w-full bg-slate-50 border border-slate-200 text-slate-900 dark:bg-slate-800 dark:border-white/10 dark:text-white rounded-xl px-4 py-3 focus:outline-none focus:border-red-600 transition-all duration-300 ease-in-out disabled:opacity-50"
                     />
                     {isAlumnoDropdownOpen && (
-                      <div className="absolute z-10 w-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl shadow-lg max-h-48 overflow-y-auto custom-scrollbar">
+                      <div
+                        onMouseDown={(e) => e.preventDefault()} // evita que el input pierda el foco (y cierre el menú) antes de que se registre el clic
+                        className="absolute z-10 w-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl shadow-lg max-h-48 overflow-y-auto custom-scrollbar"
+                      >
                         {filteredAlumnosDropdown.length === 0 ? (
                           <div className="px-4 py-3 text-sm text-slate-700 dark:text-white/80">No se encontraron alumnos</div>
                         ) : (
